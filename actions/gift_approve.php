@@ -19,15 +19,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $current_points = $stmt->fetchColumn();
 
             if ($current_points >= $cost) {
-                // Trừ điểm
+                // 1. Trừ điểm
                 $conn->prepare("UPDATE users SET current_points = current_points - :cost WHERE id = :id")
                      ->execute([':cost' => $cost, ':id' => $student_id]);
                 
-                // Cập nhật trạng thái
-                $conn->prepare("UPDATE redemptions SET status = 'approved' WHERE id = :rid")
-                     ->execute([':rid' => $redemption_id]);
+                // 2. SINH MÃ VOUCHER (MỚI)
+                // Tạo chuỗi ngẫu nhiên 6 ký tự viết hoa
+                $code = 'GIFT-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
+
+                // 3. Cập nhật trạng thái + Lưu mã
+                $sqlApprove = "UPDATE redemptions 
+                               SET status = 'approved', voucher_code = :code 
+                               WHERE id = :rid";
+                $conn->prepare($sqlApprove)->execute([':code' => $code, ':rid' => $redemption_id]);
                 
-                $_SESSION['success'] = "Đã duyệt đổi quà! Bé bị trừ $cost sao.";
+                $_SESSION['success'] = "Đã duyệt! Mã voucher [$code] đã được gửi cho bé.";
             } else {
                 $_SESSION['error'] = "Không thể duyệt: Bé không còn đủ điểm.";
             }

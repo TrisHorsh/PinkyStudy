@@ -48,6 +48,16 @@ $stmtHistory = $conn->prepare($sqlHistory);
 $stmtHistory->execute([':sid' => $student_id]);
 $history_tasks = $stmtHistory->fetchAll();
 
+// 5. Lấy danh sách quà đã Approved (chưa dùng)
+    $sqlVouchers = "SELECT r.*, g.gift_name, g.gift_image 
+                    FROM redemptions r 
+                    JOIN gifts g ON r.gift_id = g.id 
+                    WHERE r.student_id = :sid AND r.status = 'approved' 
+                    ORDER BY r.redemption_date DESC";
+    $stmtV = $conn->prepare($sqlVouchers);
+    $stmtV->execute([':sid' => $student_id]);
+    $vouchers = $stmtV->fetchAll();
+
 include '../../includes/header_student.php';
 ?>
 
@@ -258,6 +268,34 @@ include '../../includes/header_student.php';
         <h3 style="margin: 0 0 5px 0;">🎁 Cửa hàng quà tặng</h3>
         <p style="margin: 0; font-size: 0.9em;">Bạn đang có <b><?php echo $user['current_points']; ?> sao</b>. Bấm vào đây để xem quà nhé!</p>
     </div>
+
+    <?php if (count($vouchers) > 0): ?>
+    <div class="section-title">
+        <span>🎟️ Kho Voucher của bạn (Đưa bố mẹ quét nhé)</span>
+    </div>
+    <div style="display: flex; overflow-x: auto; gap: 20px; padding-bottom: 20px;">
+        <?php foreach ($vouchers as $v): ?>
+            <?php 
+                // Tạo link xác thực (Lưu ý: localhost chỉ chạy được trên cùng máy)
+                // Để chạy thật, bạn cần thay 'localhost' bằng IP máy tính (VD: 192.168.1.5)
+                $verifyLink = "http://localhost/PinkyStudy/pages/parent/verify_gift.php?code=" . $v['voucher_code'];
+                $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyLink);
+            ?>
+            <div style="background: white; min-width: 280px; padding: 20px; border-radius: 15px; text-align: center; border: 2px dashed #ff9800; position: relative;">
+                <h4 style="margin: 0 0 10px 0; color: #e65100;"><?php echo htmlspecialchars($v['gift_name']); ?></h4>
+                
+                <a href="<?php echo $verifyLink; ?>" target="_blank" title="Click để giả lập quét mã">
+                    <img src="<?php echo $qrUrl; ?>" alt="QR Code" style="border-radius: 8px;">
+                </a>
+                
+                <div style="font-family: monospace; font-size: 1.5em; font-weight: bold; margin: 10px 0; color: #333;">
+                    <?php echo $v['voucher_code']; ?>
+                </div>
+                <small style="color: #666;">Đưa mã này cho bố mẹ</small>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
 </div>
 
