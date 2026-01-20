@@ -22,78 +22,115 @@ $stmt->execute([':tid' => $task_id, ':pid' => $parent_id]);
 $task = $stmt->fetch();
 
 if (!$task) {
+    // Có thể thêm trang báo lỗi đẹp hơn sau này, tạm thời dùng die
     die("Nhiệm vụ không tồn tại hoặc chưa được nộp.");
 }
 
 include '../../includes/header.php';
 ?>
 
-<div class="container">
-    <a href="tasks.php?student_id=<?php echo $task['student_id']; ?>" class="btn" style="background:#6c757d; color:white; margin-bottom:15px;">&larr; Quay lại danh sách</a>
+<div class="grading-container">
+    <a href="manage_student.php?student_id=<?php echo $task['student_id']; ?>" class="btn btn-secondary" style="margin-bottom:15px;">
+        <i class="fas fa-arrow-left"></i> Quay lại quản lý bé
+    </a>
 
-    <div class="card" style="border-top: 5px solid #007bff; display: flex; flex-wrap: wrap; gap: 20px;">
+    <div class="grading-layout">
         
-        <div style="flex: 1; min-width: 300px;">
-            <h2>📝 Chấm bài: <?php echo htmlspecialchars($task['full_name']); ?></h2>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                <p><strong>Nhiệm vụ:</strong> <?php echo htmlspecialchars($task['title']); ?></p>
-                <p><strong>Mô tả:</strong> <?php echo htmlspecialchars($task['description']); ?></p>
-                <p><strong>Điểm tối đa:</strong> <span style="color: #d63384; font-weight: bold;"><?php echo $task['points_reward']; ?> ⭐</span></p>
-                <hr>
-                <p><strong>Lời nhắn của bé:</strong><br> "<i><?php echo htmlspecialchars($task['proof_text'] ?: 'Không có lời nhắn'); ?></i>"</p>
+        <div class="grading-panel">
+            <h2 style="margin-top: 0; color: #28a745; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+                <i class="fas fa-check-circle"></i> Chấm bài
+            </h2>
+            
+            <div class="task-info-box">
+                <div class="task-info-item">
+                    <span class="task-info-label">Học sinh:</span>
+                    <strong><?php echo htmlspecialchars($task['full_name']); ?></strong>
+                </div>
+                <div class="task-info-item">
+                    <span class="task-info-label">Nhiệm vụ:</span>
+                    <span><?php echo htmlspecialchars($task['title']); ?></span>
+                </div>
+                <div class="task-info-item">
+                    <span class="task-info-label">Mô tả:</span>
+                    <span style="font-size: 0.9em; text-align: right;"><?php echo htmlspecialchars($task['description']); ?></span>
+                </div>
+                <div class="task-info-item" style="border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 10px;">
+                    <span class="task-info-label">Điểm thưởng:</span>
+                    <span class="badge bg-green" style="font-size: 1em;"><?php echo $task['points_reward']; ?> ⭐</span>
+                </div>
+                
+                <?php if (!empty($task['proof_text'])): ?>
+                <div class="student-message">
+                    <i class="fas fa-comment-dots"></i> "<?php echo htmlspecialchars($task['proof_text']); ?>"
+                </div>
+                <?php endif; ?>
             </div>
 
-            <h3 style="margin-top: 20px;">Đánh giá & Cho điểm</h3>
+            <h3 style="margin-bottom: 15px;">Đánh giá & Cho điểm</h3>
+            
             <form action="../../actions/task_grade.php" method="POST">
                 <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
                 <input type="hidden" name="student_id" value="<?php echo $task['student_id']; ?>">
                 <input type="hidden" name="max_points" value="<?php echo $task['points_reward']; ?>">
 
-                <div style="margin-bottom: 15px;">
-                    <label style="font-weight: bold;">Số sao thực nhận:</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="score-control">
+                    <div>
+                        <label style="font-weight: bold; display: block; color: #856404;">Số sao thực nhận:</label>
+                        <small style="color: #856404;">(Có thể trừ bớt nếu làm chưa tốt)</small>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
                         <input type="number" name="actual_score" 
                                value="<?php echo $task['points_reward']; ?>" 
                                max="<?php echo $task['points_reward']; ?>" 
                                min="0" 
-                               class="form-control" style="width: 100px; padding: 10px; font-size: 1.2em; border: 2px solid #28a745; text-align: center;">
-                        <span>/ <?php echo $task['points_reward']; ?> ⭐</span>
+                               class="score-input">
+                        <span style="font-weight: bold; font-size: 1.2em; color: #856404;">/ <?php echo $task['points_reward']; ?></span>
                     </div>
-                    <small style="color: #666;">Bạn có thể trừ điểm nếu bé làm chưa tốt.</small>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" name="action" value="approve" class="btn btn-primary" style="background-color: #28a745; flex: 1;">
-                        ✅ Duyệt & Cộng điểm
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="submit" name="action" value="approve" class="btn btn-success" style="padding: 12px; font-size: 1.1em; font-weight: bold;">
+                        <i class="fas fa-award"></i> Duyệt & Cộng điểm
                     </button>
                     
-                    <button type="submit" name="action" value="reject" class="btn btn-danger" onclick="return confirm('Yêu cầu bé làm lại?');">
-                        ❌ Làm lại
+                    <button type="submit" name="action" value="reject" class="btn btn-danger" onclick="return confirm('Bạn chắc chắn muốn yêu cầu bé làm lại?');" style="background: white; color: #dc3545; border: 1px solid #dc3545;">
+                        <i class="fas fa-undo"></i> Yêu cầu làm lại
                     </button>
                 </div>
             </form>
         </div>
 
-        <div style="flex: 2; min-width: 400px; border: 1px dashed #ccc; padding: 10px; border-radius: 8px; background: #fff;">
-            <h3 style="text-align: center; margin-top: 0;">Bằng chứng nộp bài</h3>
-            <?php 
-                $file_path = "../../uploads/proofs/" . $task['proof_file'];
-                $ext = strtolower(pathinfo($task['proof_file'], PATHINFO_EXTENSION));
-                
-                if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-                    // HIỂN THỊ ẢNH
-                    echo "<div style='text-align: center;'><img src='$file_path' style='max-width: 100%; max-height: 600px; border-radius: 4px;'></div>";
-                } elseif ($ext == 'pdf') {
-                    // HIỂN THỊ PDF (Trực tiếp)
-                    echo "<iframe src='$file_path' width='100%' height='600px' style='border: none;'></iframe>";
-                } else {
-                    // WORD/EXCEL (Tải về)
-                    echo "<div style='text-align: center; padding: 50px;'>
-                            <p>Định dạng <b>.$ext</b> không hỗ trợ xem trước.</p>
-                            <a href='$file_path' class='btn btn-primary'>📥 Tải xuống để xem</a>
-                          </div>";
-                }
-            ?>
+        <div class="proof-viewer">
+            <div class="proof-header">
+                <h3 style="margin: 0; font-size: 1.1em;"><i class="fas fa-paperclip"></i> Bằng chứng nộp bài</h3>
+                <?php 
+                    $file_url = "../../uploads/proofs/" . $task['proof_file']; 
+                ?>
+                <a href="<?php echo $file_url; ?>" download class="btn btn-sm btn-primary" style="font-size: 0.8em;">
+                    <i class="fas fa-download"></i> Tải về
+                </a>
+            </div>
+
+            <div class="proof-content">
+                <?php 
+                    $ext = strtolower(pathinfo($task['proof_file'], PATHINFO_EXTENSION));
+                    
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                        // HIỂN THỊ ẢNH
+                        echo "<img src='$file_url' alt='Bằng chứng'>";
+                    } elseif ($ext == 'pdf') {
+                        // HIỂN THỊ PDF
+                        echo "<iframe src='$file_url'></iframe>";
+                    } else {
+                        // CÁC FILE KHÁC (WORD/EXCEL...)
+                        echo "<div style='text-align: center; color: white;'>
+                                <i class='fas fa-file-alt' style='font-size: 4em; margin-bottom: 20px; color: #ccc;'></i>
+                                <p>Định dạng <b>.$ext</b> không hỗ trợ xem trước.</p>
+                                <p>Vui lòng bấm nút tải về ở góc trên.</p>
+                              </div>";
+                    }
+                ?>
+            </div>
         </div>
 
     </div>

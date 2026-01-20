@@ -14,14 +14,14 @@ $parent_id = $_SESSION['parent_id'];
 $stmtUser = $conn->prepare("SELECT current_points FROM users WHERE id = :id");
 $stmtUser->execute([':id' => $student_id]);
 $current_points = $stmtUser->fetchColumn();
-$_SESSION['current_points'] = $current_points; // Update session
+$_SESSION['current_points'] = $current_points; 
 
 // 2. Lấy danh sách quà
 $stmtGifts = $conn->prepare("SELECT * FROM gifts WHERE parent_id = :pid AND is_active = 1");
 $stmtGifts->execute([':pid' => $parent_id]);
 $gifts = $stmtGifts->fetchAll();
 
-// 3. Lấy lịch sử đổi quà gần đây
+// 3. Lấy lịch sử
 $stmtHist = $conn->prepare("SELECT r.*, g.gift_name FROM redemptions r JOIN gifts g ON r.gift_id = g.id WHERE r.student_id = :sid ORDER BY r.redemption_date DESC LIMIT 5");
 $stmtHist->execute([':sid' => $student_id]);
 $history = $stmtHist->fetchAll();
@@ -29,56 +29,78 @@ $history = $stmtHist->fetchAll();
 include '../../includes/header_student.php';
 ?>
 
-<div class="card" style="text-align: center; background: linear-gradient(45deg, #ffc107, #ff9800); color: white;">
-    <h2>💰 Ví của bạn có: <?php echo $current_points; ?> sao</h2>
-    <p>Hãy chăm chỉ làm nhiệm vụ để đổi được nhiều quà nhé!</p>
-</div>
+<link rel="stylesheet" href="../../assets/css/student_style.css?v=<?php echo time(); ?>">
 
-<h3 style="color: #e91e63;">🎁 Cửa hàng quà tặng</h3>
+<div class="dashboard-container">
 
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
-    <?php foreach($gifts as $gift): ?>
-        <?php $can_buy = ($current_points >= $gift['point_cost']); ?>
-        
-        <div class="card" style="padding: 0; overflow: hidden; position: relative; <?php if(!$can_buy) echo 'opacity: 0.6;'; ?>">
-            <img src="../../uploads/gifts/<?php echo $gift['gift_image']; ?>" style="width: 100%; height: 180px; object-fit: cover;">
+    <a href="dashboard.php" class="btn-back" style="margin-bottom: 20px; display: inline-block;">&larr; Quay lại Dashboard</a>
+
+    <div class="wallet-card">
+        <div class="wallet-label">Tài sản hiện có</div>
+        <div class="wallet-amount"><?php echo $current_points; ?> ⭐</div>
+        <p style="margin: 0; position: relative; z-index: 2;">Chăm chỉ làm nhiệm vụ để ví dày thêm nhé!</p>
+    </div>
+
+    <div class="section-title" style="color: #e17055;">
+        <span>🎁 Cửa hàng tạp hóa kỳ diệu</span>
+    </div>
+
+    <div class="shop-grid">
+        <?php foreach($gifts as $gift): ?>
+            <?php $can_buy = ($current_points >= $gift['point_cost']); ?>
             
-            <div style="padding: 15px; text-align: center;">
-                <h4 style="margin: 5px 0;"><?php echo htmlspecialchars($gift['gift_name']); ?></h4>
-                <div style="font-size: 1.2em; font-weight: bold; color: #d63384; margin-bottom: 10px;">
-                    <?php echo $gift['point_cost']; ?> ⭐
+            <div class="gift-card" <?php if(!$can_buy) echo 'style="opacity: 0.7; filter: grayscale(0.5);"'; ?>>
+                <div class="gift-img-wrapper">
+                    <img src="../../uploads/gifts/<?php echo $gift['gift_image']; ?>" class="gift-img">
                 </div>
+                
+                <div class="gift-body">
+                    <div>
+                        <div class="gift-title"><?php echo htmlspecialchars($gift['gift_name']); ?></div>
+                        <div class="gift-price"><?php echo $gift['point_cost']; ?> sao</div>
+                    </div>
 
-                <form action="../../actions/gift_redeem.php" method="POST" onsubmit="return confirm('Bạn muốn đổi món quà này chứ?');">
-                    <input type="hidden" name="gift_id" value="<?php echo $gift['id']; ?>">
-                    <input type="hidden" name="point_cost" value="<?php echo $gift['point_cost']; ?>">
-                    
-                    <?php if ($can_buy): ?>
-                        <button type="submit" name="redeem_btn" class="btn btn-action" style="width: 100%;">Đổi ngay 🎁</button>
-                    <?php else: ?>
-                        <button type="button" class="btn" style="background: #ccc; cursor: not-allowed; width: 100%;">Thiếu điểm 🔒</button>
-                    <?php endif; ?>
-                </form>
+                    <form action="../../actions/gift_redeem.php" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn đổi món quà này chứ?');">
+                        <input type="hidden" name="gift_id" value="<?php echo $gift['id']; ?>">
+                        <input type="hidden" name="point_cost" value="<?php echo $gift['point_cost']; ?>">
+                        
+                        <?php if ($can_buy): ?>
+                            <button type="submit" name="redeem_btn" class="btn-redeem active">Đổi ngay 🛍️</button>
+                        <?php else: ?>
+                            <button type="button" class="btn-redeem disabled">Chưa đủ điểm 🔒</button>
+                        <?php endif; ?>
+                    </form>
+                </div>
             </div>
-        </div>
-    <?php endforeach; ?>
-</div>
-
-<h3 style="margin-top: 40px; color: #2196f3;">📜 Lịch sử đổi quà</h3>
-<div class="card">
-    <ul>
-        <?php foreach($history as $h): ?>
-            <li>
-                Đổi <b><?php echo htmlspecialchars($h['gift_name']); ?></b> 
-                (<?php echo $h['points_spent']; ?> sao) - 
-                <?php 
-                    if($h['status'] == 'pending') echo '<span style="color:orange; font-weight:bold;">Đang chờ hệ thống duyệt ⏳</span>';
-                    elseif($h['status'] == 'approved') echo '<span style="color:green; font-weight:bold;">Thành công ✅</span>';
-                    else echo '<span style="color:red;">Bị từ chối ❌</span>';
-                ?>
-            </li>
         <?php endforeach; ?>
-    </ul>
+    </div>
+
+    <div class="section-title" style="margin-top: 40px;">
+        <span>📜 Lịch sử giao dịch</span>
+    </div>
+    <div class="history-card" style="padding: 0; overflow: hidden; border: none;">
+        <ul class="history-list">
+            <?php foreach($history as $h): ?>
+                <li class="history-item">
+                    <div>
+                        <span style="font-size: 1.2em;">🛍️</span> 
+                        Đổi <b><?php echo htmlspecialchars($h['gift_name']); ?></b>
+                        <br>
+                        <small style="color: #999;">Tiêu tốn: <?php echo $h['points_spent']; ?> sao</small>
+                    </div>
+                    
+                    <div>
+                        <?php 
+                            if($h['status'] == 'pending') echo '<span class="status-badge st-pending">⏳ Chờ Hệ thống duyệt</span>';
+                            elseif($h['status'] == 'approved') echo '<span class="status-badge st-approved">✅ Thành công</span>';
+                            else echo '<span class="status-badge st-rejected">❌ Bị từ chối</span>';
+                        ?>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+
 </div>
 
 </body>

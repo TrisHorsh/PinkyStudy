@@ -24,7 +24,6 @@ $_SESSION['current_points'] = $user['current_points'];
 $timetable = getTimetableData($conn, $student_id);
 
 // 3. Lấy Nhiệm vụ (Tách làm 2 nhóm)
-// Nhóm 1: Nhiệm vụ Hàng ngày (Daily) - Chưa hoàn thành hoặc Đang chờ chấm
 $sqlDaily = "SELECT * FROM assigned_tasks 
              WHERE student_id = :sid AND task_type = 'daily' 
              AND status != 'approved' 
@@ -33,7 +32,6 @@ $stmtDaily = $conn->prepare($sqlDaily);
 $stmtDaily->execute([':sid' => $student_id]);
 $tasks_daily = $stmtDaily->fetchAll();
 
-// Nhóm 2: Nhiệm vụ Thử thách/Thường (Challenge/Normal) - Chưa hoàn thành hoặc Đang chờ chấm
 $sqlChallenge = "SELECT * FROM assigned_tasks 
                  WHERE student_id = :sid AND task_type != 'daily' 
                  AND status != 'approved' 
@@ -42,7 +40,7 @@ $stmtChallenge = $conn->prepare($sqlChallenge);
 $stmtChallenge->execute([':sid' => $student_id]);
 $tasks_challenge = $stmtChallenge->fetchAll();
 
-// 4. [MỚI] Lấy LỊCH SỬ BÀI ĐÃ CHẤM (Approved) - Lấy 10 bài gần nhất
+// 4. Lấy LỊCH SỬ BÀI ĐÃ CHẤM
 $sqlHistory = "SELECT * FROM assigned_tasks 
                WHERE student_id = :sid 
                AND status = 'approved' 
@@ -51,132 +49,62 @@ $stmtHistory = $conn->prepare($sqlHistory);
 $stmtHistory->execute([':sid' => $student_id]);
 $history_tasks = $stmtHistory->fetchAll();
 
-// 5. Lấy danh sách quà đã Approved (chưa dùng)
-    $sqlVouchers = "SELECT r.*, g.gift_name, g.gift_image 
-                    FROM redemptions r 
-                    JOIN gifts g ON r.gift_id = g.id 
-                    WHERE r.student_id = :sid AND r.status = 'approved' 
-                    ORDER BY r.redemption_date DESC";
-    $stmtV = $conn->prepare($sqlVouchers);
-    $stmtV->execute([':sid' => $student_id]);
-    $vouchers = $stmtV->fetchAll();
+// 5. Lấy danh sách quà đã Approved
+$sqlVouchers = "SELECT r.*, g.gift_name, g.gift_image 
+                FROM redemptions r 
+                JOIN gifts g ON r.gift_id = g.id 
+                WHERE r.student_id = :sid AND r.status = 'approved' 
+                ORDER BY r.redemption_date DESC";
+$stmtV = $conn->prepare($sqlVouchers);
+$stmtV->execute([':sid' => $student_id]);
+$vouchers = $stmtV->fetchAll();
 
 include '../../includes/header_student.php';
 ?>
 
-<style>
-    /* Tổng thể */
-    .dashboard-container { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
-    
-    /* 1. Card thông tin (Header) */
-    .welcome-card {
-        background: linear-gradient(135deg, #00bcd4, #0097a7);
-        color: white;
-        padding: 20px;
-        border-radius: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 10px rgba(0,188,212,0.3);
-    }
-    .welcome-text h2 { margin: 0; font-size: 1.5em; }
-    .welcome-text p { margin: 5px 0 0 0; opacity: 0.9; }
-    .points-box {
-        background: rgba(255,255,255,0.2);
-        padding: 10px 20px;
-        border-radius: 10px;
-        text-align: center;
-        backdrop-filter: blur(5px);
-    }
-    .points-num { font-size: 1.8em; font-weight: bold; color: #ffeb3b; display: block; }
-    
-    /* 2. Thời khóa biểu */
-    .section-title { font-size: 1.2em; color: #333; margin-bottom: 15px; border-left: 5px solid #00bcd4; padding-left: 10px; display: flex; align-items: center; justify-content: space-between;}
-    .tkb-wrapper { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; transition: all 0.3s; }
-    .tkb-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-    .tkb-table th, .tkb-table td { border: 1px solid #eee; padding: 8px; text-align: center; }
-    .tkb-header { background: #f1f5f9; color: #555; }
-    .tkb-session { font-weight: bold; background: #f8fafc; color: #00bcd4; }
-    
-    /* 3. Nhiệm vụ (2 Cột) */
-    .tasks-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 25px; }
-    .task-col { flex: 1; min-width: 300px; }
-    .task-col-header { 
-        background: #fff; padding: 10px 15px; border-radius: 10px 10px 0 0; 
-        font-weight: bold; text-transform: uppercase; color: #555; border-bottom: 2px solid #eee; 
-    }
-    .daily-header { border-bottom-color: #4caf50; color: #2e7d32; }
-    .challenge-header { border-bottom-color: #ff9800; color: #ef6c00; }
-    
-    .task-list { background: white; border-radius: 0 0 10px 10px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); min-height: 200px; }
-    
-    .task-item { 
-        display: block; text-decoration: none; color: inherit; /* Biến thẻ a thành block */
-        border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 10px; 
-        transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
-    }
-    .task-item:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-color: #b2ebf2; }
-    
-    .task-status { position: absolute; top: 0; right: 0; padding: 3px 8px; font-size: 0.7em; border-radius: 0 0 0 8px; font-weight: bold; }
-    .status-pending { background: #e0f7fa; color: #0097a7; }
-    .status-submitted { background: #e8f5e9; color: #2e7d32; }
-    .status-rejected { background: #ffebee; color: #c62828; }
-
-    /* 4. Lịch sử (Mới) */
-    .history-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
-    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f1f1; }
-    .history-item:last-child { border-bottom: none; }
-    .history-score { font-weight: bold; color: #2e7d32; font-size: 1.1em; background: #e8f5e9; padding: 5px 10px; border-radius: 20px; }
-
-    /* 5. Cửa hàng (Footer Action) */
-    .shop-promo { 
-        background: linear-gradient(45deg, #ff9800, #ff5722); 
-        color: white; padding: 20px; border-radius: 15px; text-align: center; 
-        box-shadow: 0 4px 10px rgba(255,87,34,0.3); cursor: pointer; transition: transform 0.2s;
-    }
-    .shop-promo:hover { transform: scale(1.02); }
-</style>
+<link rel="stylesheet" href="../../assets/css/student_style.css?v=<?php echo time(); ?>">
 
 <div class="dashboard-container">
 
     <div class="welcome-card">
         <div class="welcome-text">
-            <h2>Chào bạn, <?php echo htmlspecialchars($user['full_name']); ?>! 👋</h2>
-            <p>Chúc bạn một ngày học tập thật hiệu quả.</p>
+            <h2>Xin chào, <?php echo htmlspecialchars($user['full_name']); ?>! 🚀</h2>
+            <p>Sẵn sàng chinh phục thử thách hôm nay chưa?</p>
         </div>
         <div class="points-box">
-            <span>Tài khoản hiện có</span>
+            <span style="font-size: 0.9em; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; color: #b2bec3;">Kho báu của bạn</span>
             <span class="points-num"><?php echo $user['current_points']; ?> ⭐</span>
         </div>
     </div>
 
     <div class="section-title">
-        <span>📅 Thời khóa biểu</span>
-        <button id="tkbToggle" onclick="toggleTKB()" class="btn" style="background: #e0f7fa; color: #006064; font-size: 0.8em;">Thu gọn ▲</button>
+        <span>📅 Lịch học trong tuần</span>
+        <button id="tkbToggle" onclick="toggleTKB()" class="btn-toggle">Thu gọn ▲</button>
     </div>
     
     <div id="tkbContent" class="tkb-wrapper">
         <div style="overflow-x: auto;">
-            <table class="tkb-table">
+            <table class="tkb-table" style="width: 100%; border-collapse: separate; border-spacing: 5px;">
                 <thead>
-                    <tr class="tkb-header">
-                        <th style="background: #fff;"></th>
-                        <th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th><th>CN</th>
+                    <tr>
+                        <th style="background: transparent;"></th>
+                        <th>Thứ 2</th><th>Thứ 3</th><th>Thứ 4</th><th>Thứ 5</th><th>Thứ 6</th><th>Thứ 7</th><th>CN</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php 
-                    $sessions = ['morning' => 'Sáng', 'afternoon' => 'Chiều', 'evening' => 'Tối'];
+                    $sessions = ['morning' => 'Sáng ☀️', 'afternoon' => 'Chiều ⛅', 'evening' => 'Tối 🌙'];
                     foreach ($sessions as $key => $label): 
                     ?>
                     <tr>
-                        <td class="tkb-session"><?php echo $label; ?></td>
+                        <td class="tkb-session" style="text-align: center; vertical-align: middle;"><?php echo $label; ?></td>
                         <?php for($d=2; $d<=8; $d++): ?>
                             <td>
                                 <?php if (!empty($timetable[$key][$d])): ?>
                                     <?php foreach ($timetable[$key][$d] as $subj): ?>
-                                        <div style="margin-bottom: 4px; font-weight: 500;"><?php echo htmlspecialchars($subj['name']); ?></div>
+                                        <div style="background: #dfe6e9; padding: 5px; border-radius: 5px; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">
+                                            <?php echo htmlspecialchars($subj['name']); ?>
+                                        </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </td>
@@ -195,49 +123,51 @@ include '../../includes/header_student.php';
             <div class="task-list">
                 <?php if(count($tasks_daily) > 0): ?>
                     <?php foreach($tasks_daily as $task): ?>
-                        <a href="do_task.php?task_id=<?php echo $task['id']; ?>" class="task-item">
-                            
+                        <a href="do_task.php?task_id=<?php echo $task['id']; ?>" class="quest-card">
                             <?php if($task['status'] == 'submitted'): ?>
-                                <span class="task-status status-submitted">Đang chấm...</span>
+                                <span class="quest-badge badge-submitted">Đang chấm... ⏳</span>
                             <?php elseif($task['status'] == 'rejected'): ?>
-                                <span class="task-status status-rejected">Làm lại</span>
+                                <span class="quest-badge badge-rejected">Làm lại ⚠️</span>
                             <?php else: ?>
-                                <span class="task-status status-pending">Cần làm</span>
+                                <span class="quest-badge badge-pending">Mới ✨</span>
                             <?php endif; ?>
 
-                            <div style="font-weight: bold; margin-bottom: 5px;"><?php echo htmlspecialchars($task['title']); ?></div>
-                            <div style="font-size: 0.85em; color: #666;"><?php echo htmlspecialchars($task['description']); ?></div>
-                            <div style="margin-top: 8px; font-weight: bold; color: #2e7d32;">+<?php echo $task['points_reward']; ?> sao</div>
+                            <div style="font-weight: 800; font-size: 1.1em; margin-bottom: 5px;"><?php echo htmlspecialchars($task['title']); ?></div>
+                            <div style="font-size: 0.9em; color: #636e72;"><?php echo htmlspecialchars($task['description']); ?></div>
+                            <div class="quest-points">+<?php echo $task['points_reward']; ?> sao</div>
                         </a>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p style="text-align: center; color: #999; margin-top: 20px;">Bạn đã hoàn thành hết việc hôm nay! ✅</p>
+                    <div style="text-align: center; padding: 20px;">
+                        <span style="font-size: 3em;">🎉</span>
+                        <p style="color: #00b894; font-weight: bold;">Tuyệt vời! Đã xong hết việc hôm nay.</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
 
         <div class="task-col">
-            <div class="task-col-header challenge-header">🔥 Nhiệm vụ Thử thách</div>
+            <div class="task-col-header challenge-header">🔥 Thử thách đặc biệt</div>
             <div class="task-list">
                 <?php if(count($tasks_challenge) > 0): ?>
                     <?php foreach($tasks_challenge as $task): ?>
-                        <a href="do_task.php?task_id=<?php echo $task['id']; ?>" class="task-item" style="border-left: 3px solid #ff9800;">
+                        <a href="do_task.php?task_id=<?php echo $task['id']; ?>" class="quest-card" style="border-left: 5px solid #ff7675;">
                             
                             <?php if($task['status'] == 'submitted'): ?>
-                                <span class="task-status status-submitted">Đang chấm...</span>
+                                <span class="quest-badge badge-submitted">Đang chấm...</span>
                             <?php elseif($task['status'] == 'rejected'): ?>
-                                <span class="task-status status-rejected">Làm lại</span>
+                                <span class="quest-badge badge-rejected">Làm lại</span>
                             <?php else: ?>
-                                <span class="task-status status-pending">Thử thách</span>
+                                <span class="quest-badge badge-pending">Thử thách ⚔️</span>
                             <?php endif; ?>
 
-                            <div style="font-weight: bold; margin-bottom: 5px;"><?php echo htmlspecialchars($task['title']); ?></div>
-                            <div style="font-size: 0.85em; color: #666;"><?php echo htmlspecialchars($task['description']); ?></div>
-                            <div style="margin-top: 8px; font-weight: bold; color: #ef6c00;">+<?php echo $task['points_reward']; ?> sao</div>
+                            <div style="font-weight: 800; font-size: 1.1em; margin-bottom: 5px;"><?php echo htmlspecialchars($task['title']); ?></div>
+                            <div style="font-size: 0.9em; color: #636e72;"><?php echo htmlspecialchars($task['description']); ?></div>
+                            <div class="quest-points" style="background: #ff7675; color: white;">+<?php echo $task['points_reward']; ?> sao</div>
                         </a>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p style="text-align: center; color: #999; margin-top: 20px;">Chưa có thử thách nào mới.</p>
+                    <p style="text-align: center; color: #b2bec3; margin-top: 20px;">Đang chờ Hệ thống cập nhật thêm thử thách...</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -245,56 +175,55 @@ include '../../includes/header_student.php';
     </div>
 
     <div class="section-title">
-        <span>📜 Lịch sử bài đã chấm (Gần đây)</span>
+        <span>📜 Bảng vàng thành tích (Gần đây)</span>
     </div>
     <div class="history-card">
         <?php if(count($history_tasks) > 0): ?>
             <?php foreach($history_tasks as $ht): ?>
-            <div class="history-item">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #eee;">
                 <div>
-                    <div style="font-weight: bold; color: #333;"><?php echo htmlspecialchars($ht['title']); ?></div>
-                    <div style="font-size: 0.85em; color: #888;">
+                    <div style="font-weight: bold; color: #2d3436;"><?php echo htmlspecialchars($ht['title']); ?></div>
+                    <div style="font-size: 0.8em; color: #b2bec3;">
                         Hoàn thành: <?php echo date('H:i - d/m/Y', strtotime($ht['completed_at'])); ?>
                     </div>
                 </div>
-                <div class="history-score">
+                <div style="font-weight: 900; color: #00b894; background: #55efc433; padding: 5px 10px; border-radius: 15px;">
                     +<?php echo $ht['points_reward']; ?> ⭐
                 </div>
             </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <p style="text-align: center; color: #999;">Bạn chưa có bài nào được chấm điểm.</p>
+            <p style="text-align: center; color: #b2bec3;">Bạn chưa có bài nào được chấm điểm.</p>
         <?php endif; ?>
     </div>
 
     <div class="shop-promo" onclick="window.location.href='shop.php'">
-        <h3 style="margin: 0 0 5px 0;">🎁 Cửa hàng quà tặng</h3>
-        <p style="margin: 0; font-size: 0.9em;">Bạn đang có <b><?php echo $user['current_points']; ?> sao</b>. Bấm vào đây để xem quà nhé!</p>
+        <h3>🎁 Cửa hàng quà tặng</h3>
+        <p style="margin: 0; font-size: 1.1em;">Bạn đang có <b><?php echo $user['current_points']; ?> sao</b>. Bấm vào đây để đổi quà ngay!</p>
     </div>
 
     <?php if (count($vouchers) > 0): ?>
-    <div class="section-title">
-        <span>🎟️ Kho Voucher của bạn (Đưa bố mẹ quét nhé)</span>
+    <div class="section-title" style="margin-top: 30px;">
+        <span>🎟️ Vé đổi quà của bạn</span>
     </div>
     <div style="display: flex; overflow-x: auto; gap: 20px; padding-bottom: 20px;">
         <?php foreach ($vouchers as $v): ?>
             <?php 
-                // Tạo link xác thực (Lưu ý: localhost chỉ chạy được trên cùng máy)
-                // Để chạy thật, bạn cần thay 'localhost' bằng IP máy tính (VD: 192.168.1.5)
+                // Tạo link xác thực
                 $verifyLink = "http://localhost/PinkyStudy/pages/parent/verify_gift.php?code=" . $v['voucher_code'];
                 $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($verifyLink);
             ?>
-            <div style="background: white; min-width: 280px; padding: 20px; border-radius: 15px; text-align: center; border: 2px dashed #ff9800; position: relative;">
-                <h4 style="margin: 0 0 10px 0; color: #e65100;"><?php echo htmlspecialchars($v['gift_name']); ?></h4>
+            <div class="voucher-ticket">
+                <h4 style="margin: 0 0 10px 0; color: #e17055; font-size: 1.2em;"><?php echo htmlspecialchars($v['gift_name']); ?></h4>
                 
                 <a href="<?php echo $verifyLink; ?>" target="_blank" title="Click để giả lập quét mã">
-                    <img src="<?php echo $qrUrl; ?>" alt="QR Code" style="border-radius: 8px;">
+                    <img src="<?php echo $qrUrl; ?>" alt="QR Code" style="border-radius: 8px; border: 2px solid #eee;">
                 </a>
                 
-                <div style="font-family: monospace; font-size: 1.5em; font-weight: bold; margin: 10px 0; color: #333;">
+                <div style="font-family: 'Courier New', monospace; font-size: 1.5em; font-weight: 900; margin: 10px 0; color: #2d3436; letter-spacing: 2px;">
                     <?php echo $v['voucher_code']; ?>
                 </div>
-                <small style="color: #666;">Đưa mã này cho bố mẹ</small>
+                <small style="color: #636e72;">Đưa mã này cho bố mẹ quét nhé</small>
             </div>
         <?php endforeach; ?>
     </div>

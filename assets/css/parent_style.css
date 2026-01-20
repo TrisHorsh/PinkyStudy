@@ -1,0 +1,762 @@
+/* assets/css/parent_style.css */
+
+/* --- CƠ BẢN --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f4f6f9; /* Xám nhạt dịu mắt */
+    color: #333;
+    padding-bottom: 50px;
+}
+
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- NAVBAR (THANH ĐIỀU HƯỚNG) --- */
+.navbar {
+    background-color: #343a40; /* Màu tối chuyên nghiệp */
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.navbar .brand {
+    font-size: 1.2em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .menu a {
+    color: #ced4da;
+    text-decoration: none;
+    margin-left: 20px;
+    transition: 0.2s;
+    font-size: 0.95em;
+}
+
+.navbar .menu a:hover {
+    color: white;
+}
+
+/* --- CARD (KHUNG NỘI DUNG) --- */
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+/* --- BUTTONS --- */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.btn-primary { background-color: #007bff; color: white; }
+.btn-success { background-color: #28a745; color: white; }
+.btn-danger  { background-color: #dc3545; color: white; }
+.btn-warning { background-color: #ffc107; color: #212529; }
+.btn-secondary { background-color: #6c757d; color: white; }
+
+/* --- FORM --- */
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+.form-control:focus {
+    border-color: #80bdff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* --- TABLES --- */
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th { background: #f8f9fa; font-weight: 600; color: #495057; }
+th, td { padding: 12px; border-bottom: 1px solid #dee2e6; text-align: left; }
+tr:last-child td { border-bottom: none; }
+
+/* --- ALERTS --- */
+.alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+.alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error   { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* --- CSS CHO DASHBOARD (PHỤ HUYNH) --- */
+
+.dashboard-header {
+    margin-bottom: 30px;
+}
+.dashboard-title {
+    font-size: 1.8em;
+    color: #343a40;
+    margin: 0;
+    border-left: 5px solid #007bff;
+    padding-left: 15px;
+}
+
+/* 1. Toggle Box (Form thêm học sinh) */
+.toggle-box {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 40px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.toggle-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #495057;
+    transition: background 0.2s;
+    user-select: none;
+}
+.toggle-header:hover {
+    background: #e2e6ea;
+    color: #007bff;
+}
+
+.toggle-content {
+    display: none; /* Mặc định ẩn */
+    padding: 25px;
+    border-top: 1px solid #dee2e6;
+    background: #fff;
+}
+.toggle-content.show {
+    display: block; /* Hiện khi có class show */
+}
+
+/* 2. Grid Danh sách học sinh */
+.student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.student-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.student-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+    border-color: #80bdff;
+}
+
+/* Phần trên của Card (Màu nền) */
+.student-card-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    padding: 25px;
+    text-align: center;
+    color: white;
+}
+
+.student-avatar {
+    font-size: 3em;
+    background: rgba(255,255,255,0.2);
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    backdrop-filter: blur(5px);
+}
+
+.student-name {
+    margin: 0;
+    font-size: 1.3em;
+    font-weight: 700;
+}
+.student-username {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Phần thân Card */
+.student-card-body {
+    padding: 20px;
+    text-align: center;
+    flex: 1; /* Để đẩy footer xuống đáy nếu nội dung ngắn */
+}
+
+.point-display {
+    display: inline-block;
+    background: #fff3cd;
+    color: #856404;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    border: 1px solid #ffeeba;
+}
+
+/* Phần chân Card (Nút bấm) */
+.student-card-footer {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-manage {
+    width: 100%;
+    display: block;
+    text-align: center;
+    padding: 10px;
+    background: white;
+    color: #007bff;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+.btn-manage:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* --- TRANG QUẢN LÝ CHI TIẾT (MANAGE STUDENT) --- */
+
+.manage-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 1. Thanh thông tin học sinh (Info Bar) */
+.student-info-bar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+}
+
+.student-info-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.student-icon {
+    font-size: 3em;
+    background: rgba(255,255,255,0.2);
+    width: 70px; height: 70px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+}
+.student-detail h2 { margin: 0; font-size: 1.6em; }
+.student-detail span { opacity: 0.9; font-size: 0.95em; }
+
+.student-stats-box {
+    text-align: right;
+    background: rgba(0,0,0,0.1);
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+/* 2. Các khối chức năng (Section Box) */
+.section-box {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 700;
+    color: #495057;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+.section-header:hover { background: #e2e6ea; }
+
+.section-body {
+    padding: 20px;
+    display: none; /* Mặc định ẩn để gọn */
+}
+.section-body.show { display: block; } /* Hiện khi active */
+.section-body.always-show { display: block !important; } /* Luôn hiện (cho phần quan trọng) */
+
+/* Badge đếm số lượng */
+.count-badge {
+    background: #dc3545;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+/* 3. Lưới cấu hình nhiệm vụ (Task Config Grid) */
+.task-config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+/* Responsive: Trên mobile thì dồn thành 1 cột */
+@media (max-width: 768px) {
+    .task-config-grid { grid-template-columns: 1fr; }
+    .student-info-bar { flex-direction: column; text-align: center; gap: 20px; }
+    .student-info-left { flex-direction: column; }
+    .student-stats-box { text-align: center; width: 100%; }
+}
+
+/* 4. Danh sách item (List Items) */
+.list-item {
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+.list-item:hover {
+    background: #f9f9f9;
+    border-color: #d1d1d1;
+    transform: translateX(3px);
+}
+
+.list-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+}
+.bg-green { background: #28a745; }
+.bg-blue { background: #007bff; }
+.bg-orange { background: #fd7e14; }
+.bg-red { background: #dc3545; }
+
+/* --- TRANG CHẤM ĐIỂM (GRADING) --- */
+
+.grading-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.grading-layout {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+/* Responsive: Màn hình nhỏ thì đẩy cột xem ảnh xuống dưới */
+@media (max-width: 900px) {
+    .grading-layout { flex-direction: column; }
+}
+
+/* 1. Panel bên trái: Form chấm */
+.grading-panel {
+    flex: 1;
+    min-width: 350px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border-top: 5px solid #28a745; /* Màu xanh lá chấm bài */
+    height: fit-content;
+}
+
+.task-info-box {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+.task-info-item {
+    margin-bottom: 12px;
+    font-size: 1em;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+}
+.task-info-label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.student-message {
+    background: #e3f2fd;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+    font-style: italic;
+    color: #0d47a1;
+    margin-top: 15px;
+    font-size: 0.95em;
+}
+
+/* Khung nhập điểm nổi bật */
+.score-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    background: #fff3cd;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px dashed #ffc107;
+}
+
+.score-input {
+    width: 80px;
+    padding: 10px;
+    font-size: 1.5em;
+    font-weight: 800;
+    text-align: center;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    color: #856404;
+    outline: none;
+}
+.score-input:focus {
+    border-color: #ff9800;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+}
+
+/* 2. Panel bên phải: Xem bằng chứng (Viewer) */
+.proof-viewer {
+    flex: 2;
+    background: #2d3436; /* Nền tối để nổi bật tài liệu */
+    padding: 20px;
+    border-radius: 12px;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.proof-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.proof-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.proof-content img {
+    max-width: 100%;
+    max-height: 70vh; /* Giới hạn chiều cao để không bị tràn màn hình */
+    border-radius: 4px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+}
+
+.proof-content iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    border: none;
+    background: white;
+}
+
+/* --- THỜI KHÓA BIỂU (TIMETABLE) --- */
+
+.tkb-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden; /* Bo tròn góc cho cả bảng bên trong */
+    border: 1px solid #e9ecef;
+}
+
+/* Thanh công cụ thêm môn học */
+.tkb-toolbar {
+    background: #f1f3f5; /* Xám nhạt hiện đại */
+    padding: 25px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tkb-form-title {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 1.1em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Bảng thời khóa biểu */
+.tkb-table-wrapper {
+    overflow-x: auto; /* Cho phép cuộn ngang trên mobile */
+    padding-bottom: 20px;
+}
+
+.tkb-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px; /* Đảm bảo không bị co quá nhỏ */
+}
+
+/* Header (Thứ) */
+.tkb-table thead th {
+    background: #343a40; /* Màu tối chủ đạo */
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+    border-right: 1px solid #495057;
+}
+.tkb-table thead th:first-child {
+    border-top-left-radius: 0; 
+}
+.tkb-table thead th:last-child {
+    border-right: none;
+}
+
+/* Cột Buổi (Sáng/Chiều/Tối) */
+.tkb-session-col {
+    background: #e9ecef;
+    color: #495057;
+    font-weight: 800;
+    text-align: center;
+    vertical-align: middle;
+    width: 120px;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+}
+
+/* Ô nội dung */
+.tkb-table td {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    vertical-align: top;
+    background: white;
+    height: 100px; /* Chiều cao tối thiểu cho đẹp */
+    transition: background 0.2s;
+}
+.tkb-table td:last-child { border-right: none; }
+.tkb-table tr:last-child td { border-bottom: none; }
+
+.tkb-table td:hover {
+    background: #f8f9fa; /* Highlight nhẹ khi di chuột */
+}
+
+/* Thẻ môn học (Tag) */
+.subject-tag {
+    background: #e3f2fd; /* Xanh dương nhạt */
+    color: #0d47a1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #90caf9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+.subject-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background: white;
+}
+
+.btn-del-subject {
+    color: #ff5252;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-left: 8px;
+    text-decoration: none;
+    line-height: 1;
+    opacity: 0.6;
+    padding: 0 5px;
+}
+.btn-del-subject:hover {
+    opacity: 1;
+    background: #ffebee;
+    border-radius: 4px;
+}
+
+/* --- TRANG THỐNG KÊ (STATS) --- */
+
+/* Thanh lọc thời gian (Filter Bar) */
+.filter-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Layout chia cột: Biểu đồ & Danh sách */
+.report-layout {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+    .report-layout { flex-direction: column; }
+    .chart-panel, .list-panel { width: 100%; }
+}
+
+/* 1. Panel Biểu đồ */
+.chart-panel {
+    flex: 4; /* Chiếm 4 phần */
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+}
+
+/* 2. Panel Danh sách chi tiết */
+.list-panel {
+    flex: 3; /* Chiếm 3 phần */
+}
+
+/* Box từng ngày trong danh sách */
+.day-report-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.day-header {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    font-weight: 700;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95em;
+}
+
+.day-body {
+    padding: 0;
+}
+
+/* Dòng nhiệm vụ */
+.task-row-item {
+    padding: 12px 15px;
+    border-bottom: 1px dashed #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+}
+.task-row-item:last-child { border-bottom: none; }
+
+/* Trạng thái (Chấm tròn màu) */
+.status-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+.dot-success { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
+.dot-pending { background-color: #ffc107; }
+.dot-failed  { background-color: #dc3545; }
+
+/* Badge loại task */
+.task-type-badge {
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.type-daily { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.type-normal { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }

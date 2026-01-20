@@ -1,0 +1,153 @@
+/* assets/css/auth_style.css */
+
+/* Reset cơ bản */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Gradient nền nhẹ nhàng, thân thiện */
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #333;
+}
+
+/* Container chung cho form (Card) */
+.auth-wrapper {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* Bóng đổ mềm mại */
+    width: 100%;
+    max-width: 400px;
+    transition: transform 0.3s ease;
+}
+
+.auth-wrapper:hover {
+    transform: translateY(-5px); /* Hiệu ứng nổi nhẹ khi di chuột */
+}
+
+/* Tiêu đề */
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header h2 {
+    color: #e91e63; /* Màu hồng đậm PinkyStudy */
+    font-size: 24px;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.auth-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #444;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background-color: #fafafa;
+}
+
+.form-group input:focus {
+    border-color: #e91e63; /* Highlight màu hồng khi nhập */
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+/* Buttons */
+.btn-auth {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    color: white;
+}
+
+.btn-primary {
+    background-color: #007bff; /* Xanh cho đăng nhập */
+}
+
+.btn-primary:hover {
+    background-color: #0069d9;
+}
+
+.btn-success {
+    background-color: #28a745; /* Xanh lá cho đăng ký */
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-auth:active {
+    transform: scale(0.98); /* Hiệu ứng nhấn xuống */
+}
+
+/* Thông báo lỗi/thành công */
+.alert {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alert-error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+/* Link chuyển đổi */
+.auth-footer {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 14px;
+    color: #666;
+}
+
+.auth-footer a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}

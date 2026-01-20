@@ -26,7 +26,6 @@ $to_date = $_GET['to_date'] ?? date('Y-m-d');
 $from_date = $_GET['from_date'] ?? date('Y-m-d', strtotime('-6 days'));
 
 // 4. LẤY DỮ LIỆU BIỂU ĐỒ (Số sao kiếm được theo ngày - Dựa vào ngày duyệt bài approved)
-// Chỉ tính những bài đã approved
 $sqlChart = "SELECT DATE(completed_at) as date_val, SUM(points_reward) as total_points 
              FROM assigned_tasks 
              WHERE student_id = :sid 
@@ -36,9 +35,9 @@ $sqlChart = "SELECT DATE(completed_at) as date_val, SUM(points_reward) as total_
              ORDER BY date_val ASC";
 $stmtChart = $conn->prepare($sqlChart);
 $stmtChart->execute([':sid' => $student_id, ':from' => $from_date, ':to' => $to_date]);
-$chartDataRaw = $stmtChart->fetchAll(PDO::FETCH_KEY_PAIR); // Ra dạng ['2023-10-01' => 15, '2023-10-02' => 20]
+$chartDataRaw = $stmtChart->fetchAll(PDO::FETCH_KEY_PAIR);
 
-// Chuẩn hóa dữ liệu biểu đồ (Điền 0 cho những ngày không có dữ liệu)
+// Chuẩn hóa dữ liệu biểu đồ
 $labels = [];
 $dataPoints = [];
 $current = strtotime($from_date);
@@ -46,13 +45,12 @@ $end = strtotime($to_date);
 
 while ($current <= $end) {
     $d = date('Y-m-d', $current);
-    $labels[] = date('d/m', $current); // Label trục hoành (VD: 25/10)
-    $dataPoints[] = $chartDataRaw[$d] ?? 0; // Nếu không có thì là 0 sao
+    $labels[] = date('d/m', $current); 
+    $dataPoints[] = $chartDataRaw[$d] ?? 0; 
     $current = strtotime('+1 day', $current);
 }
 
-// 5. LẤY DỮ LIỆU DANH SÁCH (Nhiệm vụ theo ngày - Dựa vào ngày giao created_at)
-// Lấy tất cả trạng thái để báo cáo
+// 5. LẤY DỮ LIỆU DANH SÁCH CHI TIẾT
 $sqlList = "SELECT DATE(created_at) as create_date, t.* FROM assigned_tasks t
             WHERE student_id = :sid 
             AND DATE(created_at) BETWEEN :from AND :to 
@@ -60,138 +58,120 @@ $sqlList = "SELECT DATE(created_at) as create_date, t.* FROM assigned_tasks t
             
 $stmtList = $conn->prepare($sqlList);
 $stmtList->execute([':sid' => $student_id, ':from' => $from_date, ':to' => $to_date]);
-$taskList = $stmtList->fetchAll(PDO::FETCH_GROUP); // Nhóm theo create_date: ['2023-10-25' => [task1, task2]]
+$taskList = $stmtList->fetchAll(PDO::FETCH_GROUP); // Nhóm theo ngày
 
 include '../../includes/header.php';
 ?>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-    .stats-container { max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
+<div class="manage-container">
     
-    /* Layout 2 cột */
-    .report-grid { display: flex; gap: 30px; margin-top: 20px; }
-    .chart-col { flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .list-col { flex: 1; }
-    
-    /* Responsive: Mobile xuống dòng */
-    @media (max-width: 768px) { .report-grid { flex-direction: column; } }
+    <div class="filter-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="manage_student.php?student_id=<?php echo $student_id; ?>" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+            <h3 style="margin: 0; color: #343a40;">
+                📊 Báo cáo: <span style="color: #007bff;"><?php echo htmlspecialchars($student['full_name']); ?></span>
+            </h3>
+        </div>
 
-    /* Box ngày tháng trong danh sách */
-    .day-box { background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden; }
-    .day-header { 
-        background: #f8f9fa; padding: 10px 15px; font-weight: bold; color: #555; 
-        border-bottom: 1px solid #eee; display: flex; justify-content: space-between; 
-    }
-    .day-body { padding: 10px; max-height: 300px; overflow-y: auto; } /* Scroll nếu dài */
-
-    /* Item nhiệm vụ */
-    .task-row { 
-        display: flex; justify-content: space-between; align-items: center; 
-        padding: 8px 0; border-bottom: 1px dashed #eee; 
-    }
-    .task-row:last-child { border-bottom: none; }
-    
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .dot-success { background: #28a745; } /* Đã xong */
-    .dot-failed { background: #dc3545; } /* Thất bại */
-    .dot-pending { background: #ffc107; } /* Chưa xong */
-    
-    .task-type-badge { font-size: 0.7em; padding: 2px 5px; border-radius: 4px; margin-left: 5px; text-transform: uppercase; }
-    .type-daily { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-    .type-challenge { background: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
-</style>
-
-<div class="stats-container">
-    <a href="manage_student.php?student_id=<?php echo $student_id; ?>" class="btn" style="background:#6c757d; color:white; margin-bottom:15px;">&larr; Quay lại quản lý</a>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <h2 style="margin: 0;">📊 Báo cáo học tập: <?php echo htmlspecialchars($student['full_name']); ?></h2>
-        
-        <form method="GET" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <form method="GET" class="filter-form">
             <input type="hidden" name="student_id" value="<?php echo $student_id; ?>">
-            <label>Từ:</label>
-            <input type="date" name="from_date" value="<?php echo $from_date; ?>" style="border: 1px solid #ddd; padding: 5px; border-radius: 4px;">
-            <label>Đến:</label>
-            <input type="date" name="to_date" value="<?php echo $to_date; ?>" style="border: 1px solid #ddd; padding: 5px; border-radius: 4px;">
-            <button type="submit" class="btn btn-primary" style="padding: 6px 15px; font-size: 0.9em;">Lọc</button>
+            
+            <div style="font-size: 0.9em; font-weight: bold;">Từ:</div>
+            <input type="date" name="from_date" value="<?php echo $from_date; ?>" class="form-control" style="width: auto; padding: 5px;">
+            
+            <div style="font-size: 0.9em; font-weight: bold;">Đến:</div>
+            <input type="date" name="to_date" value="<?php echo $to_date; ?>" class="form-control" style="width: auto; padding: 5px;">
+            
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-filter"></i> Lọc
+            </button>
         </form>
     </div>
 
-    <div class="report-grid">
+    <div class="report-layout">
         
-        <div class="chart-col">
-            <h4 style="text-align: center; margin-top: 0; color: #007bff;">Số sao tích lũy được</h4>
-            <canvas id="starsChart"></canvas>
-            <div style="text-align: center; margin-top: 20px; font-size: 0.9em; color: #666;">
-                <i>Biểu đồ thể hiện số sao bé thực sự nhận được (đã được duyệt) trong khoảng thời gian này.</i>
+        <div class="chart-panel">
+            <h4 style="text-align: center; margin-top: 0; color: #495057; margin-bottom: 20px;">
+                Tiến độ tích lũy Sao (<?php echo date('d/m', strtotime($from_date)) . ' - ' . date('d/m', strtotime($to_date)); ?>)
+            </h4>
+            
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="starsChart"></canvas>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 0.9em; color: #6c757d; font-style: italic;">
+                * Biểu đồ hiển thị số điểm thực nhận sau khi phụ huynh duyệt bài.
             </div>
         </div>
 
-        <div class="list-col">
-            <h4 style="margin-top: 0; color: #333;">Chi tiết nhiệm vụ theo ngày</h4>
+        <div class="list-panel">
+            <h4 style="margin-top: 0; color: #495057; margin-bottom: 15px;">Chi tiết nhiệm vụ</h4>
             
             <?php 
-            // Vòng lặp từ ngày Đến -> ngày Từ (Đảo ngược để ngày mới nhất lên đầu)
+            // Duyệt ngược từ ngày kết thúc về ngày bắt đầu
             $curr = strtotime($to_date);
             $start = strtotime($from_date);
-            
+            $hasData = false;
+
             while ($curr >= $start) {
                 $dateStr = date('Y-m-d', $curr);
-                $tasks = $taskList[$dateStr] ?? []; // Lấy task của ngày đó
+                $tasks = $taskList[$dateStr] ?? [];
                 
-                // Chỉ hiện box nếu ngày đó có task (hoặc bạn có thể hiện box trống nếu muốn báo cáo chặt chẽ hơn)
-                // Ở đây tôi chọn hiện cả ngày trống để phụ huynh biết ngày đó không giao bài
-                ?>
-                <div class="day-box">
+                // Chỉ hiện những ngày CÓ nhiệm vụ để danh sách đỡ dài
+                if (count($tasks) > 0): 
+                    $hasData = true;
+            ?>
+                <div class="day-report-card">
                     <div class="day-header">
-                        <span>🗓 <?php echo date('d/m/Y', $curr); ?></span>
-                        <span style="font-size: 0.9em; font-weight: normal;">
-                            (<?php echo count($tasks); ?> nhiệm vụ)
-                        </span>
+                        <span><i class="far fa-calendar-alt"></i> <?php echo date('d/m/Y', $curr); ?></span>
+                        <span class="badge bg-blue"><?php echo count($tasks); ?> task</span>
                     </div>
                     <div class="day-body">
-                        <?php if (count($tasks) > 0): ?>
-                            <?php foreach ($tasks as $t): ?>
-                                <div class="task-row">
-                                    <div>
-                                        <?php if ($t['status'] == 'approved'): ?>
-                                            <span class="status-dot dot-success" title="Hoàn thành"></span>
-                                            <span style="text-decoration: line-through; color: #888;"><?php echo htmlspecialchars($t['title']); ?></span>
-                                        <?php elseif ($t['status'] == 'failed'): ?>
-                                            <span class="status-dot dot-failed" title="Thất bại/Hết hạn"></span>
-                                            <span style="color: #dc3545;"><?php echo htmlspecialchars($t['title']); ?></span>
-                                        <?php else: ?>
-                                            <span class="status-dot dot-pending" title="Chờ xử lý"></span>
-                                            <span><?php echo htmlspecialchars($t['title']); ?></span>
-                                        <?php endif; ?>
+                        <?php foreach ($tasks as $t): ?>
+                            <div class="task-row-item">
+                                <div>
+                                    <?php if ($t['status'] == 'approved'): ?>
+                                        <span class="status-dot dot-success" title="Hoàn thành"></span>
+                                        <span style="text-decoration: line-through; opacity: 0.7;"><?php echo htmlspecialchars($t['title']); ?></span>
+                                    <?php elseif ($t['status'] == 'failed'): ?>
+                                        <span class="status-dot dot-failed" title="Thất bại"></span>
+                                        <span style="color: #dc3545;"><?php echo htmlspecialchars($t['title']); ?></span>
+                                    <?php else: ?>
+                                        <span class="status-dot dot-pending" title="Chờ xử lý"></span>
+                                        <span><?php echo htmlspecialchars($t['title']); ?></span>
+                                    <?php endif; ?>
 
-                                        <?php if($t['task_type'] == 'daily'): ?>
-                                            <span class="task-type-badge type-daily">Hàng ngày</span>
-                                        <?php else: ?>
-                                            <span class="task-type-badge type-challenge">Thử thách</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <div style="font-weight: bold; font-size: 0.9em;">
-                                        <?php if ($t['status'] == 'approved'): ?>
-                                            <span style="color: #28a745;">+<?php echo $t['points_reward']; ?> ⭐</span>
-                                        <?php elseif ($t['status'] == 'failed'): ?>
-                                            <span style="color: #ccc;">0 ⭐</span>
-                                        <?php else: ?>
-                                            <span style="color: #ffc107;">...</span>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php if($t['task_type'] == 'daily'): ?>
+                                        <span class="task-type-badge type-daily">Hàng ngày</span>
+                                    <?php else: ?>
+                                        <span class="task-type-badge type-normal">Thử thách</span>
+                                    <?php endif; ?>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p style="text-align: center; color: #ccc; margin: 10px 0;">Không có nhiệm vụ nào.</p>
-                        <?php endif; ?>
+
+                                <div style="font-weight: bold;">
+                                    <?php if ($t['status'] == 'approved'): ?>
+                                        <span style="color: #28a745;">+<?php echo $t['points_reward']; ?> ⭐</span>
+                                    <?php elseif ($t['status'] == 'failed'): ?>
+                                        <span style="color: #dc3545;">0 ⭐</span>
+                                    <?php else: ?>
+                                        <span style="color: #ffc107;">Wait</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
-                <?php
+            <?php 
+                endif; // End check count tasks
                 $curr = strtotime('-1 day', $curr);
+            }
+            
+            if (!$hasData) {
+                echo '<div style="text-align:center; color:#999; padding:20px; background:white; border-radius:10px;">Không có dữ liệu trong khoảng thời gian này.</div>';
             }
             ?>
         </div>
@@ -200,30 +180,36 @@ include '../../includes/header.php';
 </div>
 
 <script>
+    // Cấu hình biểu đồ Chart.js
     const ctx = document.getElementById('starsChart').getContext('2d');
     const starsChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'bar', // Dạng cột
         data: {
-            labels: <?php echo json_encode($labels); ?>, // Mảng ngày (trục X)
+            labels: <?php echo json_encode($labels); ?>, // Trục X (Ngày)
             datasets: [{
-                label: 'Sao đạt được',
-                data: <?php echo json_encode($dataPoints); ?>, // Mảng điểm (trục Y)
-                backgroundColor: 'rgba(54, 162, 235, 0.6)', // Màu cột xanh
+                label: 'Số sao đạt được',
+                data: <?php echo json_encode($dataPoints); ?>, // Trục Y (Điểm)
+                backgroundColor: 'rgba(54, 162, 235, 0.7)', // Màu cột (Xanh dương)
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 1,
-                borderRadius: 5
+                borderRadius: 4, // Bo tròn góc cột
+                barPercentage: 0.6 // Độ rộng cột
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, // Để chart co giãn theo div cha
+            plugins: {
+                legend: { display: false } // Ẩn chú thích vì chỉ có 1 loại dữ liệu
+            },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: { stepSize: 1 } // Chỉ hiện số nguyên
+                },
+                x: {
+                    grid: { display: false } // Ẩn lưới dọc cho đẹp
                 }
-            },
-            plugins: {
-                legend: { display: false } // Ẩn chú thích (vì chỉ có 1 cột)
             }
         }
     });
