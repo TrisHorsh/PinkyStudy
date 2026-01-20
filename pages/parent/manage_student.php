@@ -1,6 +1,7 @@
 <?php
 // pages/parent/manage_student.php
 require_once '../../config/db_connect.php';
+require_once '../../includes/functions.php';
 session_start();
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'parent') {
@@ -9,6 +10,11 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'parent') {
 
 $parent_id = $_SESSION['user_id'];
 $student_id = $_GET['student_id'] ?? 0;
+
+// --- 1. KÍCH HOẠT TỰ ĐỘNG GIAO BÀI HÀNG NGÀY ---
+// Mỗi khi phụ huynh vào trang này, hệ thống sẽ kiểm tra và tạo task daily nếu chưa có
+checkAndCreateDailyTasks($conn, $student_id, $parent_id);
+// ------------------------------------------------
 
 // 1. Lấy thông tin bé
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = :id AND parent_id = :pid");
@@ -97,6 +103,11 @@ include '../../includes/header.php';
             <div>
                 <h2 style="margin: 0; font-size: 1.5em;"><?php echo htmlspecialchars($student['full_name']); ?></h2>
                 <span style="opacity: 0.8;">@<?php echo htmlspecialchars($student['username']); ?></span>
+                <div style="margin-top: 5px;">
+                    <a href="stats.php?student_id=<?php echo $student_id; ?>" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8em;">
+                        📊 Xem Báo cáo & Thống kê
+                    </a>
+                </div>
             </div>
         </div>
         <div style="text-align: right;">
@@ -181,15 +192,34 @@ include '../../includes/header.php';
                     <div style="max-height: 400px; overflow-y: auto;">
                         <?php if(count($templates) > 0): ?>
                             <?php foreach($templates as $tpl): ?>
+                            <?php 
+                                // Sử dụng json_encode để biến chuỗi PHP thành chuỗi JS hợp lệ (tự động thêm \n)
+                                // htmlspecialchars để đảm bảo an toàn khi đặt vào thuộc tính HTML
+                                $jsTitle = htmlspecialchars(json_encode($tpl['title']));
+                                $jsDesc  = htmlspecialchars(json_encode($tpl['description']));
+                            ?>
                             <div class="list-item" style="cursor: pointer; border-left: 3px solid #007bff;" 
                                  onclick="fillTaskForm('<?php echo addslashes($tpl['title']); ?>', '<?php echo addslashes($tpl['description']); ?>', <?php echo $tpl['default_points']; ?>)">
                                 <div class="list-item-header">
                                     <strong><?php echo htmlspecialchars($tpl['title']); ?></strong>
-                                    <span class="badge bg-blue"><?php echo $tpl['default_points']; ?> ⭐</span>
+                                    
+                                    <div style="display: flex; gap: 5px; align-items: center;">
+                                        <span class="badge bg-blue"><?php echo $tpl['default_points']; ?> ⭐</span>
+                                        
+                                        <a href="../../actions/template_delete.php?id=<?php echo $tpl['id']; ?>&student_id=<?php echo $student_id; ?>" 
+                                           onclick="return confirm('Bạn chắc chắn muốn xóa mẫu này?')"
+                                           style="color: #dc3545; text-decoration: none; font-size: 1.2em; margin-left: 5px; padding: 0 5px;"
+                                           title="Xóa mẫu này">
+                                            &times;
+                                        </a>
+                                    </div>
                                 </div>
-                                <small style="color: #666;"><?php echo htmlspecialchars($tpl['description']); ?></small>
-                                <div style="text-align: right; margin-top: 5px;">
-                                    <small style="color: #0d47a1; font-weight: bold;">Click để dùng ➔</small>
+
+                                <small style="color: #666; display: block; margin-bottom: 5px; white-space: pre-line;"><?php echo htmlspecialchars($tpl['description']); ?></small>
+                                
+                                <div style="text-align: right; cursor: pointer; color: #0d47a1; font-weight: bold;"
+                                     onclick="fillTaskForm(<?php echo $jsTitle; ?>, <?php echo $jsDesc; ?>, <?php echo $tpl['default_points']; ?>)">
+                                    Click để dùng ➔
                                 </div>
                             </div>
                             <?php endforeach; ?>

@@ -31,7 +31,7 @@ function checkAndCreateDailyTasks($conn, $student_id, $parent_id) {
 
         // 3. Nếu chưa có -> Tạo mới (Insert)
         if ($checkStmt->rowCount() == 0) {
-            $insertSql = "INSERT INTO assigned_tasks (student_id, title, description, points_reward, status, created_at) 
+            $insertSql = "INSERT INTO assigned_tasks (student_id, title, description, points_reward, status, created_at, task_type) 
                           VALUES (:sid, :title, :desc, :points, 'pending', NOW(), 'daily')";
             
             $insertStmt = $conn->prepare($insertSql);
@@ -76,5 +76,22 @@ function getTimetableData($conn, $student_id) {
     }
 
     return $grid;
+}
+
+/**
+ * Tự động đánh dấu các nhiệm vụ 'pending' CŨ (trước ngày hôm nay) thành 'failed'
+ */
+function markOverdueTasksAsFailed($conn, $student_id) {
+    // Logic: Nếu status là 'pending' VÀ ngày tạo nhỏ hơn Ngày hiện tại -> Chuyển thành 'failed'
+    // Lưu ý: CURDATE() lấy ngày hiện tại (00:00:00).
+    
+    $sql = "UPDATE assigned_tasks 
+            SET status = 'failed' 
+            WHERE student_id = :sid 
+            AND status = 'pending' 
+            AND DATE(created_at) < CURDATE()";
+            
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([':sid' => $student_id]);
 }
 ?>

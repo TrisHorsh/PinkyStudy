@@ -11,6 +11,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student') {
 
 $student_id = $_SESSION['user_id'];
 
+// HẠY LOGIC TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI 'FAILED'
+markOverdueTasksAsFailed($conn, $student_id);
+
 // 1. Cập nhật điểm số
 $stmtUser = $conn->prepare("SELECT current_points, full_name FROM users WHERE id = :id");
 $stmtUser->execute([':id' => $student_id]);
