@@ -46,13 +46,13 @@ include '../../includes/header_student.php';
             <label class="form-label">1. Bằng chứng hoàn thành (Ảnh/File):</label>
             
             <div class="upload-zone">
-                <input type="file" name="proof_file" accept="image/*, .doc, .docx, .pdf" required onchange="updateFileName(this)">
+                <input type="file" name="proof_files[]" multiple accept="image/*, audio/*, .doc, .docx, .pdf" required onchange="updateFileName(this)">
                 
                 <div class="upload-content">
-                    <span class="upload-icon">📸</span>
-                    <span class="upload-text" id="fileNameDisplay">Chạm vào đây để chọn ảnh hoặc file</span>
+                    <span class="upload-icon">📸 / 🎙️</span>
+                    <span class="upload-text" id="fileNameDisplay">Chạm vào đây để chọn (có thể chọn nhiều ảnh)</span>
                     <br>
-                    <small style="color: #b2bec3; margin-top: 5px; display: block;">(Hỗ trợ ảnh, Word, PDF)</small>
+                    <small style="color: #b2bec3; margin-top: 5px; display: block;">(Hỗ trợ ảnh, Word, PDF, MP3...)</small>
                 </div>
             </div>
         </div>
@@ -71,8 +71,12 @@ include '../../includes/header_student.php';
 <script>
 function updateFileName(input) {
     const display = document.getElementById('fileNameDisplay');
-    if (input.files && input.files[0]) {
-        display.innerText = "✅ Đã chọn: " + input.files[0].name;
+    if (input.files && input.files.length > 0) {
+        if (input.files.length === 1) {
+            display.innerText = "✅ Đã chọn: " + input.files[0].name;
+        } else {
+            display.innerText = "✅ Đã chọn " + input.files.length + " file.";
+        }
         display.style.color = "#00b894";
         display.style.fontWeight = "900";
     } else {

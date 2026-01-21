@@ -22,6 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_gift_btn'])) {
         $stmt = $conn->prepare("INSERT INTO gifts (parent_id, gift_name, point_cost, gift_image) VALUES (:pid, :name, :cost, :img)");
         $stmt->execute([':pid' => $parent_id, ':name' => $name, ':cost' => $cost, ':img' => $filename]);
 
+        if (isset($_POST['wish_id']) && !empty($_POST['wish_id'])) {
+            $stmtWish = $conn->prepare("UPDATE gift_requests SET status = 'approved' WHERE id = :wid");
+            $stmtWish->execute([':wid' => $_POST['wish_id']]);
+        }
+
         $_SESSION['success'] = "Đã thêm món quà mới!";
     } else {
         $_SESSION['error'] = "Vui lòng chọn ảnh cho món quà.";

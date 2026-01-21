@@ -88,6 +88,13 @@ include '../../includes/header.php';
                     </div>
                 </div>
 
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #495057;">✍️ Lời nhận xét / Dặn dò:</label>
+                    <textarea name="parent_comment" class="form-control" rows="3" 
+                              placeholder="Ví dụ: Con làm tốt lắm, nhưng chú ý viết chữ đẹp hơn nhé..."
+                              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 8px; font-family: inherit;"></textarea>
+                </div>
+
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <button type="submit" name="action" value="approve" class="btn btn-success" style="padding: 12px; font-size: 1.1em; font-weight: bold;">
                         <i class="fas fa-award"></i> Duyệt & Cộng điểm
@@ -111,23 +118,52 @@ include '../../includes/header.php';
                 </a>
             </div>
 
-            <div class="proof-content">
+            <div class="proof-content" style="flex-direction: column; overflow-y: auto; padding: 10px;">
                 <?php 
-                    $ext = strtolower(pathinfo($task['proof_file'], PATHINFO_EXTENSION));
-                    
-                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                        // HIỂN THỊ ẢNH
-                        echo "<img src='$file_url' alt='Bằng chứng'>";
-                    } elseif ($ext == 'pdf') {
-                        // HIỂN THỊ PDF
-                        echo "<iframe src='$file_url'></iframe>";
-                    } else {
-                        // CÁC FILE KHÁC (WORD/EXCEL...)
-                        echo "<div style='text-align: center; color: white;'>
-                                <i class='fas fa-file-alt' style='font-size: 4em; margin-bottom: 20px; color: #ccc;'></i>
-                                <p>Định dạng <b>.$ext</b> không hỗ trợ xem trước.</p>
-                                <p>Vui lòng bấm nút tải về ở góc trên.</p>
-                              </div>";
+                    // Giải mã JSON. Nếu file cũ (không phải JSON) thì đưa vào mảng 1 phần tử.
+                    $files = json_decode($task['proof_file']);
+                    if (json_last_error() !== JSON_ERROR_NONE || !is_array($files)) {
+                        $files = [$task['proof_file']];
+                    }
+
+                    foreach ($files as $file) {
+                        $file_url = "../../uploads/proofs/" . $file;
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        
+                        echo "<div style='margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fff;'>";
+                        
+                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                            // HIỂN THỊ ẢNH
+                            echo "<img src='$file_url' style='max-width: 100%; display: block; margin: 0 auto; border-radius: 4px;'>";
+                        } 
+                        elseif (in_array($ext, ['mp3', 'wav', 'm4a', 'ogg'])) {
+                            // HIỂN THỊ TRÌNH NGHE NHẠC (AUDIO PLAYER)
+                            echo "<div style='display: flex; align-items: center; gap: 10px;'>
+                                    <div style='font-size: 2em; color: #E91E63;'><i class='fas fa-music'></i></div>
+                                    <div style='flex: 1;'>
+                                        <div style='font-weight: bold; margin-bottom: 5px; color: #333;'>File ghi âm: $file</div>
+                                        <audio controls style='width: 100%;'>
+                                            <source src='$file_url' type='audio/$ext'>
+                                            Trình duyệt không hỗ trợ phát âm thanh.
+                                        </audio>
+                                    </div>
+                                  </div>";
+                        }
+                        elseif ($ext == 'pdf') {
+                            // HIỂN THỊ PDF
+                            echo "<iframe src='$file_url' style='width: 100%; height: 500px; border: none;'></iframe>";
+                        } 
+                        else {
+                            // FILE KHÁC (WORD, EXCEL...)
+                            echo "<div style='text-align: center; padding: 20px;'>
+                                    <i class='fas fa-file-alt' style='font-size: 3em; color: #007bff;'></i> <br>
+                                    <p style='margin: 10px 0; font-weight: bold;'>$file</p>
+                                    <a href='$file_url' download class='btn btn-sm btn-primary'>
+                                        <i class='fas fa-download'></i> Tải về
+                                    </a>
+                                  </div>";
+                        }
+                        echo "</div>";
                     }
                 ?>
             </div>

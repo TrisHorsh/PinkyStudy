@@ -21,9 +21,17 @@ $base_url = "http://localhost/PinkyStudy";
     <div class="brand">
         <i class="fas fa-user-tie"></i> PinkyStudy <span>(Phụ huynh)</span>
     </div>
-    <div class="menu">
-        <span>Xin chào, <b><?php echo $_SESSION['fullname'] ?? 'User'; ?></b></span>
-        <a href="<?php echo $base_url; ?>/actions/auth_logout.php">
+    
+    <button class="navbar-toggle" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="menu" id="navbarMenu">
+        <span class="user-welcome">Xin chào, <b><?php echo $_SESSION['fullname'] ?? 'User'; ?></b></span>
+        <a href="<?php echo $base_url; ?>/pages/parent/dashboard.php" class="nav-link">
+            <i class="fas fa-home"></i> Trang chủ
+        </a>
+        <a href="<?php echo $base_url; ?>/actions/auth_logout.php" class="nav-link logout-link">
             <i class="fas fa-sign-out-alt"></i> Đăng xuất
         </a>
     </div>
@@ -41,3 +49,10 @@ $base_url = "http://localhost/PinkyStudy";
             <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
         </div>
     <?php endif; ?>
+
+<script>
+    // Script để bật tắt menu trên mobile
+    function toggleMenu() {
+        document.getElementById('navbarMenu').classList.toggle('active');
+    }
+</script>

@@ -385,6 +385,33 @@ tr:last-child td { border-bottom: none; }
 .bg-orange { background: #fd7e14; }
 .bg-red { background: #dc3545; }
 
+/* --- SỬA LỖI MODAL BỊ TRÀN (FINAL FIX) --- */
+#taskDetailModal .modal-content {
+    max-width: 900px !important;
+    width: 95%;
+    
+    /* 1. Giới hạn chiều cao cả modal không quá 90% màn hình */
+    max-height: 90vh; 
+    
+    /* 2. Canh giữa */
+    margin: 2vh auto; 
+    
+    /* 3. Quan trọng: Dùng Flexbox dọc để header/footer đứng yên, body cuộn */
+    display: flex;
+    flex-direction: column;
+}
+
+#taskDetailModal .modal-body {
+    /* 4. Cho phép vùng này tự co giãn lấp đầy khoảng trống */
+    flex: 1;
+    
+    /* 5. Chỉ cuộn thanh trượt trong vùng này */
+    overflow-y: auto;
+    
+    /* Xóa max-height cũ để không bị xung đột */
+    max-height: none !important;
+}
+
 /* --- TRANG CHẤM ĐIỂM (GRADING) --- */
 
 .grading-container {
@@ -652,6 +679,44 @@ tr:last-child td { border-bottom: none; }
     border-radius: 4px;
 }
 
+/* CSS cho Modal Sửa */
+.modal {
+    display: none; /* Mặc định ẩn */
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0;
+    width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.5); /* Nền tối mờ */
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto; /* Cách trên 15%, căn giữa */
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%; 
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.close-btn {
+    position: absolute; right: 15px; top: 10px;
+    color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer;
+}
+.close-btn:hover { color: #000; }
+
+.btn-edit-subject {
+    cursor: pointer; color: #ff9800; margin-right: 8px; font-size: 1.1em;
+}
+.btn-edit-subject:hover { color: #e65100; }
+
 /* --- TRANG THỐNG KÊ (STATS) --- */
 
 /* Thanh lọc thời gian (Filter Bar) */
@@ -760,3 +825,221 @@ tr:last-child td { border-bottom: none; }
 }
 .type-daily { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
 .type-normal { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+
+/* --- CHAT WIDGET (PHỤ HUYNH) --- */
+.chat-widget-btn {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    width: 60px; height: 60px;
+    background: #007bff; /* Xanh dương chuyên nghiệp */
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+    transition: transform 0.3s;
+    display: flex; align-items: center; justify-content: center;
+}
+.chat-widget-btn:hover { transform: translateY(-3px); }
+
+.chat-box {
+    display: none;
+    position: fixed;
+    bottom: 90px; right: 20px;
+    width: 350px; height: 450px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+    animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.chat-header {
+    background: #007bff; color: white; padding: 12px 15px;
+    font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+}
+.btn-close-chat { background: none; border: none; color: white; font-size: 1.1em; cursor: pointer; }
+
+.chat-content {
+    flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa;
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+/* Bong bóng tin nhắn */
+.msg-row { display: flex; width: 100%; }
+.msg-row.me { justify-content: flex-end; }
+.msg-row.you { justify-content: flex-start; }
+
+.msg-bubble {
+    max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 0.9em;
+}
+.msg-row.me .msg-bubble { background: #007bff; color: white; }
+.msg-row.you .msg-bubble { background: #e9ecef; color: #333; }
+
+.chat-input-area {
+    padding: 10px; border-top: 1px solid #dee2e6; display: flex; gap: 8px; background: white;
+}
+.chat-input {
+    flex: 1; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; outline: none;
+}
+.btn-send {
+    background: #007bff; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer;
+}
+.btn-send:hover { background: #0056b3; }
+
+/* Style cho chấm đỏ thông báo */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4757; /* Màu đỏ nổi bật */
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: bounce 1s infinite; /* Hiệu ứng nảy nhẹ */
+    display: none; /* Mặc định ẩn */
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@media (max-width: 480px) {
+    .chat-box { width: 92%; right: 4%; bottom: 85px; height: 500px; max-height: 70vh; }
+}
+
+/* --- RESPONSIVE MOBILE (PHỤ HUYNH) --- */
+
+/* 1. Navbar Mobile */
+.navbar-toggle {
+    display: none; /* Ẩn trên máy tính */
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    /* --- 1. NAVBAR --- */
+    .navbar {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+    
+    /* Giả sử bạn có nút toggle, nếu chưa có class này thì cần thêm HTML */
+    .navbar-toggle { display: block; }
+
+    .navbar .menu {
+        display: none; /* Ẩn menu mặc định */
+        width: 100%;
+        flex-direction: column;
+        margin-top: 15px;
+        background: #2c3136;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    /* Class active sẽ được JS toggle vào */
+    .navbar .menu.active { display: flex; }
+
+    .navbar .menu span {
+        display: block; margin-bottom: 10px;
+        padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .navbar .menu a {
+        margin: 5px 0;
+        display: block;
+        padding: 10px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 4px;
+    }
+
+    /* --- 2. CONTAINER --- */
+    .container, .manage-container, .grading-container {
+        padding: 10px; /* Giảm lề cho rộng chỗ */
+    }
+
+    /* --- 3. DASHBOARD --- */
+    .student-grid { grid-template-columns: 1fr; }
+    .toggle-header { font-size: 0.95em; }
+
+    /* --- 4. MANAGE STUDENT --- */
+    .student-info-bar {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+        padding: 20px 15px;
+    }
+    .student-info-left { flex-direction: column; }
+    .student-stats-box { width: 100%; background: rgba(0,0,0,0.1); text-align: center; }
+
+    .task-config-grid { grid-template-columns: 1fr; }
+
+    /* Form Giao việc */
+    #taskForm > div { flex-direction: column; }
+    #taskForm input, #taskForm select, #taskForm textarea { width: 100%; }
+
+    /* --- 5. GRADING (CHẤM BÀI) --- */
+    .grading-layout { flex-direction: column; }
+    .proof-viewer { min-height: 400px; }
+    .proof-content img { max-height: 50vh; }
+
+    /* --- 6. TIMETABLE --- */
+    .tkb-toolbar form { flex-direction: column; align-items: stretch; }
+    .tkb-toolbar form > div { width: 100%; min-width: unset; }
+    .tkb-toolbar button { width: 100%; margin-top: 10px; }
+    .tkb-table-wrapper { border: 1px solid #ddd; border-radius: 8px; }
+
+    /* --- 7. STATS (BÁO CÁO) --- */
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-form { flex-direction: column; width: 100%; gap: 10px; }
+    .filter-form input { width: 100% !important; }
+    .filter-form button { width: 100%; margin-top: 5px; }
+
+    .report-layout { flex-direction: column; }
+    
+    .task-row-item {
+        flex-direction: column; align-items: flex-start; gap: 5px;
+    }
+    .task-row-item > div:last-child {
+        width: 100%; text-align: right;
+        border-top: 1px dashed #eee; padding-top: 5px;
+    }
+
+    /* --- 8. MODAL CHI TIẾT (MỚI THÊM) --- */
+    #taskDetailModal .modal-content {
+        width: 95% !important; /* Chiếm gần hết chiều ngang màn hình đt */
+        margin: 10px auto !important; /* Căn giữa, cách trên 10px */
+        max-height: 85vh; /* Chừa lại chút khoảng trống trên dưới */
+    }
+
+    #taskDetailModal .modal-body {
+        padding: 15px !important; /* Giảm padding để nội dung rộng hơn */
+    }
+    
+    /* Nếu muốn phần Điểm và Trạng thái trong Modal xếp dọc cho dễ đọc */
+    /* (Mặc định nó đang là flex row) */
+    #taskDetailModal .modal-body > div[style*="display: flex"] {
+        flex-direction: column; /* Xếp dọc */
+        gap: 10px !important;
+    }
+}

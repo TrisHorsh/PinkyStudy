@@ -55,6 +55,12 @@ $stmtGifts = $conn->prepare("SELECT * FROM gifts WHERE parent_id = :pid ORDER BY
 $stmtGifts->execute([':pid' => $parent_id]);
 $gifts = $stmtGifts->fetchAll();
 
+// [MỚI] Lấy danh sách điều ước cần duyệt
+$stmtWishes = $conn->prepare("SELECT * FROM gift_requests WHERE student_id = :sid AND status = 'pending'");
+$stmtWishes->execute([':sid' => $student_id]);
+$pending_wishes = $stmtWishes->fetchAll();
+$wishes_count = count($pending_wishes);
+
 include '../../includes/header.php';
 ?>
 
@@ -156,10 +162,10 @@ include '../../includes/header.php';
                             </div>
 
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
-                                <button type="submit" name="add_task_btn" class="btn btn-primary" style="flex: 1;">
+                                <button type="submit" name="add_task_btn" class="btn btn-success" style="flex: 1;">
                                     <i class="fas fa-paper-plane"></i> Giao ngay
                                 </button>
-                                <button type="submit" formaction="../../actions/template_add.php" name="add_template_btn" class="btn btn-secondary" title="Lưu lại để dùng lần sau">
+                                <button type="submit" formaction="../../actions/template_add.php" name="add_template_btn" class="btn btn-primary" title="Lưu lại để dùng lần sau">
                                     <i class="fas fa-save"></i> Lưu mẫu
                                 </button>
                             </div>
@@ -175,7 +181,7 @@ include '../../includes/header.php';
                                 $jsDesc  = htmlspecialchars(json_encode($tpl['description']));
                             ?>
                             <div class="list-item" style="border-left: 4px solid #007bff; cursor: pointer;"
-                                 onclick="fillTaskForm('<?php echo addslashes($tpl['title']); ?>', '<?php echo addslashes($tpl['description']); ?>', <?php echo $tpl['default_points']; ?>)">
+                                onclick="fillTaskForm(<?php echo $jsTitle; ?>, <?php echo $jsDesc; ?>, <?php echo $tpl['default_points']; ?>)">
                                 
                                 <div class="list-item-header">
                                     <strong><?php echo htmlspecialchars($tpl['title']); ?></strong>
@@ -223,7 +229,13 @@ include '../../includes/header.php';
                     <div style="max-height: 500px; overflow-y: auto;">
                         <?php if(count($history_tasks) > 0): ?>
                             <?php foreach($history_tasks as $hTask): ?>
-                            <div class="list-item">
+                            
+                            <?php 
+                                // Chuẩn bị dữ liệu JSON để truyền vào JS
+                                $taskJson = htmlspecialchars(json_encode($hTask), ENT_QUOTES, 'UTF-8');
+                            ?>
+
+                            <div class="list-item" onclick="openTaskDetail(<?php echo $taskJson; ?>)" style="cursor: pointer;">
                                 <div class="list-item-header">
                                     <strong><?php echo htmlspecialchars($hTask['title']); ?></strong>
                                     <?php 
@@ -240,7 +252,7 @@ include '../../includes/header.php';
                                 <?php if($hTask['status'] == 'pending'): ?>
                                     <div style="text-align: right; margin-top: 5px;">
                                         <a href="../../actions/task_delete.php?id=<?php echo $hTask['id']; ?>&student_id=<?php echo $student_id; ?>" 
-                                           onclick="return confirm('Xóa nhiệm vụ này?')"
+                                           onclick="event.stopPropagation(); return confirm('Xóa nhiệm vụ này?')"
                                            style="color: #dc3545; font-size: 0.9em; text-decoration: none;">
                                            <i class="fas fa-trash"></i> Xóa bỏ
                                         </a>
@@ -265,6 +277,35 @@ include '../../includes/header.php';
         </div>
 
         <div id="rewardConfigBody" class="section-body hidden">
+
+            <?php if ($wishes_count > 0): ?>
+                <div style="background: #e3f2fd; border: 1px solid #90caf9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; color: #0d47a1;">
+                        <i class="fas fa-magic"></i> Bé có <?php echo $wishes_count; ?> điều ước mới!
+                    </h4>
+                    <table class="table" style="background: white;">
+                        <?php foreach ($pending_wishes as $wish): ?>
+                        <tr>
+                            <td style="padding: 10px;">
+                                <strong><?php echo htmlspecialchars($wish['gift_name']); ?></strong><br>
+                                <small style="color: #666;"><?php echo htmlspecialchars($wish['gift_desc']); ?></small>
+                            </td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <button type="button" class="btn btn-primary btn-sm" 
+                                        onclick="approveWish('<?php echo htmlspecialchars($wish['gift_name']); ?>', <?php echo $wish['id']; ?>)">
+                                    <i class="fas fa-check"></i> Tạo quà này
+                                </button>
+                                
+                                <a href="../../actions/gift_request_reject.php?id=<?php echo $wish['id']; ?>&student_id=<?php echo $student_id; ?>" 
+                                class="btn btn-danger btn-sm" onclick="return confirm('Từ chối điều ước này?')">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
+                </div>
+            <?php endif; ?>
             
             <?php if ($redeem_count > 0): ?>
             <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -382,6 +423,337 @@ include '../../includes/header.php';
         var formBox = document.getElementById('taskForm').parentElement;
         formBox.style.boxShadow = "0 0 15px rgba(33, 150, 243, 0.5)";
         setTimeout(() => { formBox.style.boxShadow = "none"; }, 1000);
+    }
+</script>
+
+<div id="taskDetailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin: 0; color: #007bff;"><i class="fas fa-info-circle"></i> Chi tiết nhiệm vụ</h3>
+            <span class="close-modal" onclick="closeTaskModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="detail-label">Tên nhiệm vụ:</div>
+            <div class="detail-value" id="d_title" style="font-size: 1.1em; font-weight: bold;"></div>
+            
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                    <span class="detail-label">Điểm thưởng:</span>
+                    <div class="detail-value" style="color: #d63384; font-weight: bold;" id="d_points"></div>
+                </div>
+                <div style="flex: 1;">
+                    <span class="detail-label">Trạng thái:</span>
+                    <div class="detail-value" id="d_status"></div>
+                </div>
+            </div>
+
+            <div class="detail-label">Mô tả / Hướng dẫn:</div>
+            <div class="detail-value" id="d_desc" style="background: #f8f9fa; padding: 10px; border-radius: 6px;"></div>
+
+            <div id="proof_container" style="display: none; margin-top: 20px;">
+                <h4 style="border-bottom: 2px solid #2196f3; padding-bottom: 5px; color: #0d47a1; margin-bottom: 15px;">
+                    <i class="fas fa-paperclip"></i> Bài làm của bé
+                </h4>
+                
+                <div class="proof-box">
+                    <span class="detail-label">💬 Lời nhắn của bé:</span>
+                    <p id="d_message" style="font-style: italic; color: #555; margin-bottom: 15px;">...</p>
+                    
+                    <span class="detail-label">📸 File đính kèm:</span>
+                    <div id="d_file_content" style="text-align: center; margin-top: 10px;"></div>
+                </div>
+                
+                <div style="margin-top: 10px; font-size: 0.85em; color: #888; text-align: right;" id="d_time_info"></div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeTaskModal()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openTaskDetail(task) {
+        // 1. Điền thông tin cơ bản
+        document.getElementById('d_title').innerText = task.title;
+        document.getElementById('d_desc').innerText = task.description;
+        document.getElementById('d_points').innerText = task.points_reward + ' ⭐';
+        
+        // 2. Xử lý trạng thái
+        let statusHtml = '';
+        if(task.status == 'pending') statusHtml = '<span class="badge bg-orange">Chưa làm</span>';
+        else if(task.status == 'submitted') statusHtml = '<span class="badge bg-blue">Đã nộp (Chờ duyệt)</span>';
+        else if(task.status == 'approved') statusHtml = '<span class="badge bg-green">Đã hoàn thành</span>';
+        else statusHtml = '<span class="badge bg-red">Làm lại</span>';
+        document.getElementById('d_status').innerHTML = statusHtml;
+
+        // 3. Xử lý phần Bằng chứng (Proof)
+        let proofContainer = document.getElementById('proof_container');
+        
+        // Nếu đã nộp hoặc đã duyệt (và có file) thì hiện
+        if ((task.status == 'submitted' || task.status == 'approved' || task.status == 'rejected') && task.proof_file) {
+            proofContainer.style.display = 'block';
+            
+            // Lời nhắn
+            document.getElementById('d_message').innerText = task.proof_text ? '"' + task.proof_text + '"' : "(Không có lời nhắn)";
+
+            // Kiểm tra xem ID 'd_parent_comment' đã có chưa, nếu chưa thì tạo nó
+            let commentBox = document.getElementById('d_parent_comment_box');
+            
+            // Nếu chưa có div hiển thị comment trong HTML modal (mặc định chưa có), ta sẽ chèn động vào
+            if (!commentBox) {
+                // Tạo một div mới để chứa comment
+                let proofBox = document.querySelector('.proof-box'); 
+                if(proofBox) {
+                    commentBox = document.createElement('div');
+                    commentBox.id = 'd_parent_comment_box';
+                    commentBox.style.marginTop = '15px';
+                    commentBox.style.padding = '10px';
+                    commentBox.style.backgroundColor = '#fff3cd'; // Màu vàng nhạt
+                    commentBox.style.borderLeft = '4px solid #ffc107';
+                    commentBox.style.borderRadius = '4px';
+                    // Chèn vào sau proof-box
+                    proofBox.parentNode.insertBefore(commentBox, proofBox.nextSibling);
+                }
+            }
+
+            // Gán nội dung
+            if (task.parent_comment && task.parent_comment.trim() !== "") {
+                commentBox.innerHTML = `<strong>✍️ Phụ huynh nhận xét:</strong><br><span style="color: #856404;">${task.parent_comment}</span>`;
+                commentBox.style.display = 'block';
+            } else {
+                if(commentBox) commentBox.style.display = 'none';
+            }
+
+            // --- XỬ LÝ FILE ĐÍNH KÈM (JSON ARRAY) ---
+            let files = [];
+            try {
+                // Thử parse JSON
+                files = JSON.parse(task.proof_file);
+            } catch (e) {
+                // Nếu lỗi (do dữ liệu cũ không phải JSON), coi như mảng 1 phần tử
+                files = [task.proof_file];
+            }
+
+            // Nếu files không phải mảng (trường hợp null/undefined), gán rỗng
+            if (!Array.isArray(files)) files = [];
+
+            let contentHtml = '';
+            files.forEach(file => {
+                let fileExt = file.split('.').pop().toLowerCase();
+                let fileUrl = '../../uploads/proofs/' + file;
+
+                contentHtml += `<div style="margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: white;">`;
+                
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+                    // Ảnh
+                    contentHtml += `<img src="${fileUrl}" style="max-width: 100%; display: block; margin: 0 auto;">`;
+                } 
+                else if (['mp3', 'wav', 'm4a', 'ogg'].includes(fileExt)) {
+                    // Âm thanh (Mới)
+                    contentHtml += `<div style="display:flex; align-items:center; gap:10px;">
+                                        <i class="fas fa-volume-up" style="font-size: 1.5em; color: #E91E63;"></i>
+                                        <div style="flex:1">
+                                            <div style="font-size:0.9em; font-weight:bold; margin-bottom:5px;">${file}</div>
+                                            <audio controls style="width:100%; height: 30px;">
+                                                <source src="${fileUrl}">
+                                            </audio>
+                                        </div>
+                                    </div>`;
+                }
+                else {
+                    // File khác
+                    contentHtml += `<div style="text-align: center;">
+                                        <i class="fas fa-file"></i> ${file} <br>
+                                        <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-primary" style="margin-top:5px;">Tải về</a>
+                                    </div>`;
+                }
+                contentHtml += `</div>`;
+            });
+            
+            document.getElementById('d_file_content').innerHTML = contentHtml;
+            // ----------------------------------------
+
+            // Thời gian
+            let timeStr = '';
+            if (task.submitted_at) timeStr += `Nộp lúc: ${task.submitted_at} `;
+            if (task.completed_at) timeStr += `| Duyệt lúc: ${task.completed_at}`;
+            document.getElementById('d_time_info').innerText = timeStr;
+
+        } else {
+            proofContainer.style.display = 'none';
+        }
+
+        // Hiện modal
+        document.getElementById('taskDetailModal').style.display = 'block';
+    }
+
+    function closeTaskModal() {
+        document.getElementById('taskDetailModal').style.display = 'none';
+    }
+
+    // Click ngoài để đóng
+    window.onclick = function(event) {
+        let modal = document.getElementById('taskDetailModal');
+        let editModal = document.getElementById('editModal'); // Modal sửa TKB (nếu có)
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+        if (editModal && event.target == editModal) {
+            editModal.style.display = "none";
+        }
+    }
+
+    // Hàm xử lý khi bấm "Tạo quà này" từ điều ước
+    function approveWish(giftName, wishId) {
+        // 1. Điền tên quà vào form Thêm quà
+        document.querySelector('input[name="gift_name"]').value = giftName;
+        
+        // 2. Focus vào ô nhập điểm để bố mẹ nhập giá
+        document.querySelector('input[name="point_cost"]').focus();
+        document.querySelector('input[name="point_cost"]').placeholder = "Nhập số sao cho món quà này";
+        
+        // 3. Thêm input hidden wish_id vào form để Backend biết đây là tạo từ điều ước
+        let form = document.querySelector('form[action="../../actions/gift_add.php"]');
+        
+        // Xóa input cũ nếu có
+        let oldInput = document.getElementById('wish_id_input');
+        if(oldInput) oldInput.remove();
+
+        let input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'wish_id';
+        input.id = 'wish_id_input';
+        input.value = wishId;
+        form.appendChild(input);
+
+        alert('Đã copy tên quà! Hãy nhập số sao, chọn ảnh và bấm Lưu.');
+    }
+</script>
+
+<button class="chat-widget-btn" onclick="toggleChat()">
+    <i class="fas fa-comment-alt"></i>
+    <span id="unreadBadge" class="notification-badge">0</span>
+</button>
+
+<div id="chatBox" class="chat-box">
+    <div class="chat-header">
+        <span><i class="fas fa-user-graduate"></i> Chat với <?php echo htmlspecialchars($student['full_name']); ?></span>
+        <button class="btn-close-chat" onclick="toggleChat()">&times;</button>
+    </div>
+    
+    <div id="chatContent" class="chat-content">
+        <div style="text-align: center; color: #999; margin-top: 50px;">Đang tải cuộc trò chuyện...</div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+        <button onclick="sendMessage()" class="btn-send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script>
+    // JS XỬ LÝ CHAT (Giống bên Student nhưng receiver là student_id)
+    let receiverId = <?php echo $student_id; ?>;
+    let chatInterval = null;
+    let notiInterval = null; // Interval để check thông báo
+    let isChatOpen = false;
+
+    // 1. Chạy ngay khi vào trang: Bắt đầu kiểm tra tin nhắn mới
+    startNotificationCheck();
+
+    function toggleChat() {
+        let box = document.getElementById('chatBox');
+        if (box.style.display === 'flex') {
+            box.style.display = 'none';
+            isChatOpen = false;
+            if(chatInterval) clearInterval(chatInterval);
+        } else {
+            box.style.display = 'flex';
+            isChatOpen = true;
+            fetchMessages();
+            chatInterval = setInterval(fetchMessages, 3000);
+            setTimeout(scrollToBottom, 200);
+        }
+    }
+
+    // Hàm kiểm tra tin mới (Chạy ngầm khi đóng chat)
+    function startNotificationCheck() {
+        if(notiInterval) clearInterval(notiInterval);
+        // Check ngay lập tức
+        checkUnreadCount();
+        // Sau đó lặp lại mỗi 3s
+        notiInterval = setInterval(checkUnreadCount, 3000);
+    }
+
+    function checkUnreadCount() {
+        if(isChatOpen) return; // Nếu đang chat thì không cần check kiểu này
+
+        let formData = new FormData();
+        formData.append('sender_id', receiverId); // Check tin nhắn TỪ người này gửi đến mình
+
+        fetch('../../actions/chat_check_new.php', { method: 'POST', body: formData })
+        .then(response => response.text())
+        .then(count => {
+            let badge = document.getElementById('unreadBadge');
+            if(parseInt(count) > 0) {
+                badge.innerText = count > 9 ? '9+' : count;
+                badge.style.display = 'flex'; // Hiện chấm đỏ
+                
+                // (Tùy chọn) Phát âm thanh nếu muốn
+                // playNotificationSound(); 
+            } else {
+                badge.style.display = 'none'; // Ẩn chấm đỏ
+            }
+        });
+    }
+
+    function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+    function sendMessage() {
+        let input = document.getElementById('chatInput');
+        let msg = input.value.trim();
+        if (!msg) return;
+
+        let formData = new FormData();
+        formData.append('receiver_id', receiverId);
+        formData.append('message', msg);
+
+        fetch('../../actions/chat_send.php', { method: 'POST', body: formData })
+        .then(response => response.text())
+        .then(data => {
+            if(data.trim() === 'success') {
+                input.value = '';
+                fetchMessages();
+                scrollToBottom();
+            }
+        });
+    }
+
+    function fetchMessages() {
+        if(!isChatOpen) return;
+
+        let formData = new FormData();
+        formData.append('receiver_id', receiverId);
+
+        fetch('../../actions/chat_fetch.php', { method: 'POST', body: formData })
+        .then(response => response.text())
+        .then(html => {
+            let chatBody = document.getElementById('chatContent');
+            let isAtBottom = (chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight) < 50;
+            chatBody.innerHTML = html;
+            
+            // Khi load tin nhắn, server đã đánh dấu là "Đã đọc" -> Ẩn chấm đỏ
+            document.getElementById('unreadBadge').style.display = 'none';
+
+            if(isAtBottom) scrollToBottom();
+        });
+    }
+
+    function scrollToBottom() {
+        let chatBody = document.getElementById('chatContent');
+        chatBody.scrollTop = chatBody.scrollHeight;
     }
 </script>
 

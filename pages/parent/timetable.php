@@ -111,10 +111,19 @@ include '../../includes/header.php';
                                     <?php foreach ($timetable[$key][$d] as $subj): ?>
                                         <div class="subject-tag">
                                             <span><?php echo htmlspecialchars($subj['name']); ?></span>
-                                            <a href="../../actions/timetable_delete.php?id=<?php echo $subj['id']; ?>&student_id=<?php echo $student_id; ?>" 
-                                               class="btn-del-subject" onclick="return confirm('Bạn muốn xóa môn này khỏi lịch?')" title="Xóa">
-                                               &times;
-                                            </a>
+                                            
+                                            <div style="display: flex; align-items: center;">
+                                                <span class="btn-edit-subject" 
+                                                    onclick="openEditModal(<?php echo $subj['id']; ?>, '<?php echo addslashes($subj['name']); ?>')" 
+                                                    title="Sửa tên môn">
+                                                    ✏️
+                                                </span>
+
+                                                <a href="../../actions/timetable_delete.php?id=<?php echo $subj['id']; ?>&student_id=<?php echo $student_id; ?>" 
+                                                class="btn-del-subject" onclick="return confirm('Bạn muốn xóa môn này khỏi lịch?')" title="Xóa">
+                                                &times;
+                                                </a>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -129,5 +138,49 @@ include '../../includes/header.php';
     </div>
 </div>
 
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeEditModal()">&times;</span>
+        <h3 style="margin-top: 0; color: #007bff;">✏️ Chỉnh sửa môn học</h3>
+        
+        <form action="../../actions/timetable_edit.php" method="POST">
+            <input type="hidden" name="student_id" value="<?php echo $student_id; ?>">
+            <input type="hidden" name="tkb_id" id="modal_tkb_id">
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Tên môn học:</label>
+                <input type="text" name="subject_name" id="modal_subject_name" required class="form-control">
+            </div>
+            
+            <div style="text-align: right;">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Hủy</button>
+                <button type="submit" name="edit_tkb_btn" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Hàm mở modal và điền dữ liệu cũ
+    function openEditModal(id, name) {
+        document.getElementById('modal_tkb_id').value = id;
+        document.getElementById('modal_subject_name').value = name;
+        document.getElementById('editModal').style.display = "block";
+        document.getElementById('modal_subject_name').focus(); // Focus vào ô nhập
+    }
+
+    // Hàm đóng modal
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = "none";
+    }
+
+    // Đóng khi click ra ngoài vùng modal
+    window.onclick = function(event) {
+        var modal = document.getElementById('editModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
 </body>
 </html>

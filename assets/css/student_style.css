@@ -299,6 +299,147 @@ body {
 
 .shop-promo h3 { font-size: 1.8em; margin: 0 0 10px 0; }
 
+/* --- PHẦN TỦ ĐIỀU ƯỚC (WISH LIST) --- */
+.wish-section {
+    background: linear-gradient(to right, #e3f2fd, #bbdefb);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+    border: 3px dashed #64b5f6;
+    position: relative;
+}
+
+.wish-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.wish-header h3 {
+    margin: 0;
+    color: #1565c0;
+    font-size: 1.4em;
+    font-weight: 900;
+}
+
+/* Nút mở modal điều ước */
+.btn-wish-open {
+    background: #2979ff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(41, 121, 255, 0.3);
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-wish-open:hover { transform: translateY(-3px); background: #2962ff; }
+
+/* Container cuộn ngang danh sách điều ước */
+.wish-scroll-container {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 15px; /* Để chỗ cho thanh cuộn */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #90caf9 transparent;
+}
+/* Custom thanh cuộn cho Chrome/Safari */
+.wish-scroll-container::-webkit-scrollbar { height: 8px; }
+.wish-scroll-container::-webkit-scrollbar-thumb { background: #90caf9; border-radius: 4px; }
+
+/* Thẻ điều ước (Wish Card) */
+.wish-card {
+    min-width: 220px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border: 2px solid #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.wish-name { font-weight: 800; color: #333; margin-bottom: 5px; font-size: 1.1em; }
+.wish-desc { font-size: 0.9em; color: #666; margin-bottom: 10px; line-height: 1.4; }
+
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-align: center;
+}
+.badge-pending { background: #eceff1; color: #546e7a; }
+.badge-approved { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+.badge-rejected { background: #ffebee; color: #c62828; }
+
+/* --- MODAL (CỬA SỔ BẬT LÊN) --- */
+.modal-overlay {
+    display: none; /* Mặc định ẩn */
+    position: fixed;
+    z-index: 9999;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.6); /* Nền tối mờ */
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Khi có class 'open' thì hiển thị Flex để căn giữa */
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    position: relative;
+    animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-title {
+    text-align: center;
+    color: var(--primary-color);
+    margin-top: 0;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-secondary {
+    background: #eceff1; color: #546e7a;
+    border: none; padding: 10px 20px; border-radius: 10px;
+    font-weight: bold; cursor: pointer;
+}
+.btn-submit-wish {
+    background: linear-gradient(45deg, #1565c0, #42a5f5);
+    color: white; border: none; padding: 10px 25px; border-radius: 10px;
+    font-weight: bold; cursor: pointer;
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+}
+
 /* Voucher Ticket Style */
 .voucher-ticket {
     background: white;
@@ -420,6 +561,7 @@ body {
     resize: vertical;
     transition: 0.3s;
     background: #f9f9f9;
+    box-sizing: border-box;
 }
 .gamified-textarea:focus {
     border-color: var(--primary-color);
@@ -619,3 +761,306 @@ body {
 .st-pending { background: #ffeaa7; color: #d35400; }
 .st-approved { background: #55efc4; color: #006266; }
 .st-rejected { background: #ff7675; color: white; }
+
+/* CSS Modal Student - Giao diện thân thiện */
+.st-modal {
+    display: none; 
+    position: fixed; z-index: 2000; 
+    left: 0; top: 0; width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.3s;
+}
+.st-modal-content {
+    background-color: #fff;
+    margin: 5vh auto;
+    width: 90%; max-width: 600px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    animation: zoomIn 0.3s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+@keyframes zoomIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+
+.st-modal-header {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    padding: 20px; text-align: center; color: white; position: relative;
+}
+.st-close {
+    position: absolute; right: 20px; top: 15px;
+    font-size: 28px; color: rgba(255,255,255,0.8); cursor: pointer;
+}
+.st-modal-body {
+    padding: 25px;
+    max-height: 70vh; overflow-y: auto;
+}
+
+.st-info-row { margin-bottom: 15px; }
+.st-label { font-weight: bold; color: #636e72; font-size: 0.9em; display: block; margin-bottom: 5px; }
+.st-value { color: #2d3436; font-size: 1.1em; }
+
+.st-proof-box {
+    background: #f1f2f6; border-radius: 12px; padding: 15px; margin-top: 20px;
+}
+.st-comment-box {
+    background: #fff9c4; border-left: 5px solid #fbc02d;
+    padding: 15px; border-radius: 8px; margin-top: 20px;
+    color: #5d4037;
+}
+.st-badge-approved { background: #00b894; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.9em; }
+.st-badge-submitted { background: #0984e3; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.9em; }
+
+/* --- CHAT WIDGET (HỌC SINH) --- */
+.chat-widget-btn {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe); /* Tím mộng mơ */
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+    cursor: pointer;
+    z-index: 1000;
+    transition: transform 0.3s;
+    display: flex; align-items: center; justify-content: center;
+}
+.chat-widget-btn:hover { transform: scale(1.1); }
+
+.chat-box {
+    display: none; /* Mặc định ẩn */
+    position: fixed;
+    bottom: 90px; right: 20px;
+    width: 350px;
+    height: 450px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
+    border: 3px solid #a29bfe;
+    animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Header Chat */
+.chat-header {
+    background: #6c5ce7;
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.btn-close-chat { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; }
+
+/* Nội dung tin nhắn */
+.chat-content {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #fdfbfb;
+    display: flex; flex-direction: column; gap: 10px;
+}
+
+/* Bong bóng tin nhắn */
+.msg-row { display: flex; width: 100%; }
+.msg-row.me { justify-content: flex-end; }
+.msg-row.you { justify-content: flex-start; }
+
+.msg-bubble {
+    max-width: 75%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 0.95em;
+    line-height: 1.4;
+    position: relative;
+}
+.msg-row.me .msg-bubble {
+    background: #6c5ce7; color: white;
+    border-bottom-right-radius: 2px;
+}
+.msg-row.you .msg-bubble {
+    background: #dfe6e9; color: #2d3436;
+    border-bottom-left-radius: 2px;
+}
+
+/* Khu vực nhập tin */
+.chat-input-area {
+    padding: 10px;
+    border-top: 1px solid #eee;
+    display: flex; gap: 10px;
+    background: white;
+}
+.chat-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #dfe6e9;
+    border-radius: 20px;
+    outline: none;
+}
+.chat-input:focus { border-color: #6c5ce7; }
+.btn-send {
+    background: #6c5ce7; color: white;
+    border: none; width: 40px; height: 40px; border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Style cho chấm đỏ thông báo */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4757; /* Màu đỏ nổi bật */
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: bounce 1s infinite; /* Hiệu ứng nảy nhẹ */
+    display: none; /* Mặc định ẩn */
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Responsive Mobile */
+@media (max-width: 480px) {
+    .chat-box { width: 90%; right: 5%; bottom: 80px; height: 60vh; }
+}
+
+/* --- RESPONSIVE MOBILE (HỌC SINH) --- */
+
+/* 1. Navbar Toggle Button */
+.navbar-toggle {
+    display: none;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px 12px;
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 15px;
+        padding-bottom: 60px;
+    }
+
+    /* --- Navbar Mobile --- */
+    .navbar {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+    
+    .navbar-toggle {
+        display: block; /* Hiện nút menu */
+    }
+
+    .navbar .menu {
+        display: none; /* Ẩn menu mặc định */
+        width: 100%;
+        flex-direction: column;
+        margin-top: 15px;
+        background: rgba(0, 0, 0, 0.1); /* Nền tối nhẹ */
+        padding: 15px;
+        border-radius: 15px;
+    }
+
+    .navbar .menu.active {
+        display: flex; /* Hiện khi bấm nút */
+    }
+
+    .navbar .menu a.nav-item {
+        margin: 5px 0;
+        margin-left: 0;
+        text-align: center;
+        width: 100%;
+        display: block;
+    }
+
+    .navbar .menu .star-badge {
+        margin: 10px auto; /* Căn giữa badge sao */
+        display: table;
+        font-size: 1.2em;
+    }
+    
+    .navbar .menu .logout-btn {
+        background: #ff7675;
+        color: white;
+    }
+
+    /* --- Dashboard --- */
+    /* Card Welcome */
+    .welcome-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    .welcome-text h2 { font-size: 1.5em; }
+    
+    .points-box {
+        margin-top: 20px;
+        transform: rotate(0deg); /* Bỏ nghiêng cho gọn */
+        width: 100%;
+    }
+
+    /* Thời khóa biểu: Cuộn ngang */
+    .tkb-wrapper {
+        overflow-x: auto;
+    }
+    .tkb-table {
+        min-width: 700px; /* Đảm bảo bảng không bị co dúm */
+    }
+
+    /* Nhiệm vụ: Xếp dọc */
+    .tasks-grid {
+        grid-template-columns: 1fr; /* 1 Cột duy nhất */
+        gap: 20px;
+    }
+
+    /* Voucher Ticket */
+    .voucher-ticket {
+        min-width: 80vw; /* Chiếm 80% chiều rộng màn hình */
+    }
+
+    /* --- Shop (Cửa hàng) --- */
+    .wallet-card {
+        padding: 20px;
+    }
+    .wallet-amount { font-size: 2.5em; }
+    
+    .shop-grid {
+        grid-template-columns: 1fr 1fr; /* 2 cột trên điện thoại */
+        gap: 15px;
+    }
+    
+    /* Màn hình quá nhỏ (iPhone SE...) thì về 1 cột */
+    @media (max-width: 480px) {
+        .shop-grid { grid-template-columns: 1fr; }
+    }
+
+    /* --- Do Task (Làm bài) --- */
+    .quest-detail-card {
+        padding: 20px;
+        margin: 10px 0;
+    }
+    .quest-title { font-size: 1.5em; }
+    
+    .upload-zone {
+        padding: 20px;
+    }
+    .upload-icon { font-size: 2em; }
+}
